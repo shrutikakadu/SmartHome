@@ -1,0 +1,52 @@
+# Sign Language Smart Home — .gitignore
+
+# Node
+node_modules/
+dist/
+.dist/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+env/
+.env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Arduino / ESP32
+*.elf
+*.hex
+*.bin
+
+# Java
+target/
+*.class
+*.jar
