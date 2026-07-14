@@ -50,3 +50,8 @@ build/
 target/
 *.class
 *.jar
+
+# SmartHome local state files
+backend/devices.json
+backend/notifications.json
+backend/*.json

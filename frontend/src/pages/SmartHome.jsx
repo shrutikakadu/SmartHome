@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { recognizeSign } from '../utils/recognizer'
 import './smarthome.css'
 
@@ -978,6 +979,11 @@ function CurtainWidget({ devices, onToggle }) {
    MAIN SMARTHOME COMPONENT
 ══════════════════════════════════════════════════════════════ */
 export default function SmartHome({ externalSign }) {
+  const navigate = useNavigate()
+  const user = (() => { try { return JSON.parse(localStorage.getItem('smarthome_user') || '{}') } catch { return {} } })()
+  const handleLogout = () => { localStorage.removeItem('smarthome_user'); navigate('/', { replace: true }) }
+
+  // ── State ──
   const [tab, setTab] = useState('overview')
   const [devices, setDevices] = useState({
     livingLight: true,  livingFan: true,   livingTV: false,  livingCurtain: true,  livingSpeaker: false,
@@ -995,6 +1001,66 @@ export default function SmartHome({ externalSign }) {
   const [toast, setToast] = useState(null)
   const [cmdHistory, setCmdHistory] = useState([])
   const toastRef = useRef(null)
+
+  // ── API state ──
+  const [apiOnline, setApiOnline] = useState(false)
+  const [weather, setWeather] = useState(null)
+  const [analytics, setAnalytics] = useState(null)
+  const [notifications, setNotifications] = useState([])
+  const [showNotifPanel, setShowNotifPanel] = useState(false)
+  const [clock, setClock] = useState('')
+  const [acTemp, setAcTemp] = useState(22)
+  const [thermoTemp, setThermoTemp] = useState(25)
+
+  // ── Live clock ──
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      setClock(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // ── API: health + weather + analytics + notifications ──
+  const fetchBackend = useCallback(async () => {
+    try {
+      const r = await fetch('/api/health', { signal: AbortSignal.timeout(3000) })
+      setApiOnline(r.ok)
+      if (r.ok) {
+        // Load device state from backend
+        const dRes = await fetch('/api/devices')
+        if (dRes.ok) {
+          const dData = await dRes.json()
+          if (dData.devices && Object.keys(dData.devices).length > 0) setDevices(prev => ({ ...prev, ...dData.devices }))
+        }
+        // Weather
+        const wRes = await fetch('/api/weather')
+        if (wRes.ok) setWeather(await wRes.json())
+        // Analytics
+        const aRes = await fetch('/api/analytics')
+        if (aRes.ok) setAnalytics(await aRes.json())
+        // Notifications
+        const nRes = await fetch('/api/notifications')
+        if (nRes.ok) { const nd = await nRes.json(); setNotifications(nd.notifications || []) }
+      }
+    } catch { setApiOnline(false) }
+  }, [])
+
+  useEffect(() => { fetchBackend(); const id = setInterval(fetchBackend, 30000); return () => clearInterval(id) }, [fetchBackend])
+
+  // ── Sync device toggle to backend ──
+  const syncToBackend = useCallback(async (deviceId, state) => {
+    if (!apiOnline) return
+    try {
+      await fetch('/api/device/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ device_id: deviceId, state }),
+      })
+    } catch {}
+  }, [apiOnline])
 
   // Camera
   const [camActive, setCamActive] = useState(false)
@@ -1024,10 +1090,11 @@ export default function SmartHome({ externalSign }) {
     setDevices(prev => {
       const next = { ...prev, [id]: !prev[id] }
       publish(`home/${id}`, { state: next[id] ? 'ON' : 'OFF', source: 'manual' }, 'manual')
+      syncToBackend(id, next[id])
       return next
     })
     setActiveScene(null)
-  }, [publish])
+  }, [publish, syncToBackend])
 
   const applyScene = useCallback((sceneId) => {
     const preset = SCENE_PRESETS[sceneId]
@@ -1130,113 +1197,273 @@ export default function SmartHome({ externalSign }) {
   }, [])
 
   const onCount = Object.values(devices).filter(Boolean).length
-  const tabs = [
-    { id: 'overview',    icon: '📊', label: 'Overview'     },
-    { id: 'floorplan',   icon: '🗺️', label: 'Floor Plan'   },
-    { id: 'security',    icon: '🔐', label: 'Security'      },
-    { id: 'energy',      icon: '⚡', label: 'Energy'        },
-    { id: 'automations', icon: '⚙️', label: 'Automations'  },
-    { id: 'curtains',    icon: '🪟', label: 'Curtains'      },
+  const unreadNotifs = notifications.filter(n => !n.read).length
+
+  const SIDE_TABS = [
+    { id: 'overview',    icon: '📊', label: 'Overview'    },
+    { id: 'floorplan',   icon: '🗺️', label: 'Floor Plan'  },
+    { id: 'security',    icon: '🔐', label: 'Security'     },
+    { id: 'energy',      icon: '⚡', label: 'Energy'       },
+    { id: 'automations', icon: '⚙️', label: 'Automations' },
+    { id: 'curtains',    icon: '🪟', label: 'Curtains'     },
   ]
 
   return (
-    <div className="section-content sh-root">
+    <div className="sh-root">
 
-      {/* ── HEADER ── */}
-      <div className="section-header">
-        <h2>🏠 Smart Home Automation</h2>
-        <p>Full home control — 22 devices, 6 rooms, gesture AI, MQTT, security, energy & automations</p>
-      </div>
-
-      {/* ── TAB NAV ── */}
-      <div className="sh-tab-nav">
-        {tabs.map(t => (
-          <button key={t.id} className={`sh-tab-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            <span>{t.icon}</span><span>{t.label}</span>
+      {/* ══ SIDEBAR ══ */}
+      <aside className="sh-sidebar">
+        <div className="sh-sidebar-logo">🏠</div>
+        {SIDE_TABS.map(t => (
+          <button key={t.id} className={`sh-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+            {t.icon}
+            <span className="sh-nav-tooltip">{t.label}</span>
           </button>
         ))}
-      </div>
+        <div className="sh-sidebar-spacer" />
+        <div className="sh-sidebar-bottom">
+          <div className={`sh-api-dot ${apiOnline ? 'online' : 'offline'}`} title={apiOnline ? 'Backend online' : 'Backend offline'} />
+          <div className="sh-api-label">{apiOnline ? 'API' : 'OFF'}</div>
+        </div>
+      </aside>
 
-      {/* ── CONTENT ── */}
-      <div className="sh-tab-content">
+      {/* ══ MAIN ══ */}
+      <div className="sh-main">
 
-        {/* ── GESTURE CAMERA (always visible on left) ── */}
-        {(tab === 'overview' || tab === 'floorplan') && (
-          <div className="sh-cam-sidebar">
-            <div className="db-card">
-              <h3>🎥 Gesture Control</h3>
-              <p className="sh-cam-sub">Show a sign → home reacts instantly</p>
-              <div className="sh-cam-wrap">
-                <video ref={videoRef} autoPlay playsInline muted
-                  style={{ display: camActive ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, transform: 'scaleX(-1)' }}/>
-                {camActive && <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none', objectFit: 'cover' }}/>}
-                {camActive && <div className="sh-cam-hud"><div className="camera-scan-line"/><span className="sh-cam-badge">🔴 GESTURE ACTIVE</span></div>}
-                {camError && <div className="sh-cam-err">{camError}</div>}
-                {!camActive && !camError && <div className="sh-cam-idle"><span>🏠</span><p>Gesture Control Off</p><p className="sh-cam-hint">Show hand sign to control your home</p></div>}
-                {camActive && detectedSign && (
-                  <div className={`sh-sign-pill ${GESTURE_MAP[detectedSign] ? 'mapped' : ''}`}>
-                    <span className="sh-sign-char">{detectedSign}</span>
-                    {GESTURE_MAP[detectedSign] && <span className="sh-sign-cmd">{GESTURE_MAP[detectedSign].icon} {GESTURE_MAP[detectedSign].label}</span>}
-                  </div>
-                )}
-              </div>
-              <button className={`btn-camera ${camActive ? 'stop' : 'start'}`} onClick={camActive ? stopCam : startCam} style={{ width: '100%', marginTop: '0.75rem' }}>
-                {camActive ? '⏹ Stop' : '▶ Start Gesture Control'}
-              </button>
-            </div>
-
-            {/* Scene presets */}
-            <div className="db-card">
-              <h3>🎬 Scenes</h3>
-              <div className="sh-scenes-mini">
-                {SCENE_CARDS.map(sc => (
-                  <div key={sc.id} className={`sh-sc-mini ${activeScene === sc.id ? 'active' : ''}`}
-                       style={{ '--sc': sc.color }}
-                       onClick={() => { applyScene(sc.id); setActiveScene(sc.id); showToast({ icon: sc.icon, label: sc.name, gesture: sc.gesture }); logCmd(sc.gesture, sc.id, sc.icon, sc.name) }}>
-                    <span className="sh-sc-m-icon">{sc.icon}</span>
-                    <span className="sh-sc-m-name">{sc.name}</span>
-                    <span className="sh-sc-m-gest">{sc.gesture}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Gesture map */}
-            <div className="db-card">
-              <h3>🤚 Gesture Map</h3>
-              <div className="sh-gmap-list">
-                {Object.entries(GESTURE_MAP).map(([sign, m]) => (
-                  <div key={sign} className={`sh-gmap-row ${detectedSign === sign ? 'active' : ''}`}
-                       onClick={() => execGesture(sign)} title="Click to simulate">
-                    <span className="sh-gmap-sign">{sign}</span>
-                    <span className="sh-gmap-icon">{m.icon}</span>
-                    <span className="sh-gmap-label">{m.label}</span>
-                    {detectedSign === sign && <span className="sh-gmap-live">LIVE</span>}
-                  </div>
-                ))}
-              </div>
-              <p className="sh-gmap-hint">💡 Click to simulate</p>
-            </div>
-
-            {/* MQTT Log (only shown here if not in floorplan tab) */}
-            {tab !== 'floorplan' && (
-              <div className="db-card"><MQTTLog logs={mqttLogs}/></div>
-            )}
+        {/* ── TOP BAR ── */}
+        <header className="sh-topbar">
+          <div className="sh-topbar-title">
+            <span>Gesture</span>Home
+            {user.name && <span style={{ fontSize: '.8rem', fontWeight: 500, color: 'var(--muted)', marginLeft: '.75rem' }}>· {user.name}</span>}
           </div>
-        )}
 
-        {/* ── OVERVIEW TAB ── */}
-        {tab === 'overview' && (
-          <div className="sh-tab-main">
-            <div className="db-card">
+          {/* Weather */}
+          {weather && (
+            <div className="sh-weather-chip" title={`${weather.condition} · Humidity: ${weather.humidity}%`}>
+              <span className="sh-weather-icon">{weather.icon}</span>
+              <span className="sh-weather-temp">{weather.temperature}°C</span>
+              <span className="sh-weather-cond">{weather.condition}</span>
+            </div>
+          )}
+
+          {/* Clock */}
+          <div className="sh-clock">{clock}</div>
+
+          {/* Notification bell */}
+          <button className="sh-notif-btn" onClick={() => setShowNotifPanel(p => !p)} title="Notifications">
+            🔔
+            {unreadNotifs > 0 && <span className="sh-notif-badge">{unreadNotifs > 9 ? '9+' : unreadNotifs}</span>}
+          </button>
+
+          {/* User + logout */}
+          <div className="sh-user-pill" onClick={handleLogout} title="Click to logout">
+            <div className="sh-user-avatar">{(user.name || 'U')[0].toUpperCase()}</div>
+            <div>
+              <div className="sh-user-name">{user.name || 'User'}</div>
+              <div className="sh-logout-label">Logout →</div>
+            </div>
+          </div>
+        </header>
+
+        {/* ── PAGE CONTENT ── */}
+        <main className="sh-page">
+
+          {/* ── KPI STRIP ── */}
+          <div className="sh-kpi-strip">
+            {[
+              { icon: '💡', label: 'Devices ON',   val: `${onCount} / 22`,  color: '#fbbf24', rgb: '251,191,36' },
+              { icon: '⚡',  label: 'Live Load',    val: `${Object.entries(devices).filter(([k,v]) => v).reduce((s,[k]) => { const d = DEVICE_DEFS.find(x => x.id===k); return s + (d?.watt||0) }, 0)}W`, color: '#2dd4bf', rgb: '45,212,191' },
+              { icon: '🌡️', label: 'AC Temp',     val: `${acTemp}°C`,      color: '#38bdf8', rgb: '56,189,248' },
+              { icon: '🔒', label: 'Security',    val: devices.alarm ? 'Armed' : 'Disarmed', color: devices.alarm ? '#ef4444' : '#22c55e', rgb: devices.alarm ? '239,68,68' : '34,197,94' },
+            ].map((k, i) => (
+              <div key={i} className="sh-kpi" style={{ '--kc': k.color, '--kc-rgb': k.rgb }}>
+                <div className="sh-kpi-icon">{k.icon}</div>
+                <div>
+                  <div className="sh-kpi-val">{k.val}</div>
+                  <div className="sh-kpi-label">{k.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── QUICK ACTIONS ── */}
+          <div className="sh-card">
+            <div className="sh-card-header">
+              <h3 className="sh-card-title">⚡ Quick Actions</h3>
+              <span className="sh-card-badge">Gesture or Click</span>
+            </div>
+            <div className="sh-quick-actions">
+              {SCENE_CARDS.map(sc => (
+                <button key={sc.id} className={`sh-qa-btn ${activeScene === sc.id ? 'active' : ''}`}
+                  style={{ '--qc': sc.color }}
+                  onClick={() => { applyScene(sc.id); setActiveScene(sc.id); showToast({ icon: sc.icon, label: sc.name, gesture: sc.gesture }); logCmd(sc.gesture, sc.id, sc.icon, sc.name) }}>
+                  <span className="sh-qa-icon">{sc.icon}</span>
+                  <span className="sh-qa-text">{sc.name}</span>
+                  <span className="sh-qa-badge">{sc.gesture}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── MAIN TWO-COL CONTENT ── */}
+          <div className="sh-two-col">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+          {/* ── GESTURE CAMERA (always visible on left) ── */}
+          {(tab === 'overview' || tab === 'floorplan') && (
+            <>
+              <div className="sh-card">
+                <div className="sh-card-header">
+                  <h3 className="sh-card-title">🎥 Gesture AI Control</h3>
+                  <span className="sh-card-badge">{camActive ? '🔴 LIVE' : 'OFF'}</span>
+                </div>
+                <p className="sh-cam-sub">Show a hand sign → your home reacts in real time</p>
+                <div className="sh-cam-wrap">
+                  <video ref={videoRef} autoPlay playsInline muted
+                    style={{ display: camActive ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, transform: 'scaleX(-1)' }}/>
+                  {camActive && <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none', objectFit: 'cover' }}/>}
+                  {camActive && <div className="sh-cam-hud"><div className="camera-scan-line"/><span className="sh-cam-badge">🔴 GESTURE ACTIVE</span></div>}
+                  {camError && <div className="sh-cam-err">{camError}</div>}
+                  {!camActive && !camError && <div className="sh-cam-idle"><span>🏠</span><p>Gesture Control Off</p><p className="sh-cam-hint">Show hand sign to control your home</p></div>}
+                  {camActive && detectedSign && (
+                    <div className={`sh-sign-pill ${GESTURE_MAP[detectedSign] ? 'mapped' : ''}`}>
+                      <span className="sh-sign-char">{detectedSign}</span>
+                      {GESTURE_MAP[detectedSign] && <span className="sh-sign-cmd">{GESTURE_MAP[detectedSign].icon} {GESTURE_MAP[detectedSign].label}</span>}
+                    </div>
+                  )}
+                </div>
+                <button className={`btn-camera ${camActive ? 'stop' : 'start'}`} onClick={camActive ? stopCam : startCam} style={{ width: '100%', marginTop: '0.75rem' }}>
+                  {camActive ? '⏹ Stop Gesture Control' : '▶ Start Gesture Control'}
+                </button>
+              </div>
+
+              {/* Scene presets */}
+              <div className="db-card">
+                <h3>🎬 Scenes</h3>
+                <div className="sh-scenes-mini">
+                  {SCENE_CARDS.map(sc => (
+                    <div key={sc.id} className={`sh-sc-mini ${activeScene === sc.id ? 'active' : ''}`}
+                         style={{ '--sc': sc.color }}
+                         onClick={() => { applyScene(sc.id); setActiveScene(sc.id); showToast({ icon: sc.icon, label: sc.name, gesture: sc.gesture }); logCmd(sc.gesture, sc.id, sc.icon, sc.name) }}>
+                      <span className="sh-sc-m-icon">{sc.icon}</span>
+                      <span className="sh-sc-m-name">{sc.name}</span>
+                      <span className="sh-sc-m-gest">{sc.gesture}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gesture Map */}
+              <div className="sh-card">
+                <div className="sh-card-header">
+                  <h3 className="sh-card-title">🤚 Gesture Map</h3>
+                </div>
+                <div className="sh-gmap-list">
+                  {Object.entries(GESTURE_MAP).map(([sign, m]) => (
+                    <div key={sign} className={`sh-gmap-row ${detectedSign === sign ? 'active' : ''}`}
+                         onClick={() => execGesture(sign)} title="Click to simulate">
+                      <span className="sh-gmap-sign">{sign}</span>
+                      <span className="sh-gmap-icon">{m.icon}</span>
+                      <span className="sh-gmap-label">{m.label}</span>
+                      {detectedSign === sign && <span className="sh-gmap-live">LIVE</span>}
+                    </div>
+                  ))}
+                </div>
+                <p className="sh-gmap-hint">💡 Click any gesture to simulate it</p>
+              </div>
+
+              {/* MQTT Log */}
+              {tab !== 'floorplan' && (
+                <div className="sh-card"><MQTTLog logs={mqttLogs}/></div>
+              )}
+            </>
+          )}
+
+            </div>{/* end left column */}
+
+            {/* ── RIGHT SIDEBAR: Scenes + Temp Control ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              {/* Scenes */}
+              <div className="sh-card">
+                <div className="sh-card-header"><h3 className="sh-card-title">🎥 Scene Presets</h3></div>
+                <div className="sh-scenes-mini">
+                  {SCENE_CARDS.map(sc => (
+                    <div key={sc.id} className={`sh-sc-mini ${activeScene === sc.id ? 'active' : ''}`}
+                         style={{ '--sc': sc.color }}
+                         onClick={() => { applyScene(sc.id); setActiveScene(sc.id); showToast({ icon: sc.icon, label: sc.name, gesture: sc.gesture }); logCmd(sc.gesture, sc.id, sc.icon, sc.name) }}>
+                      <span className="sh-sc-m-icon">{sc.icon}</span>
+                      <span className="sh-sc-m-name">{sc.name}</span>
+                      <span className="sh-sc-m-gest">{sc.gesture}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Temperature Control */}
+              {(tab === 'overview' || tab === 'energy') && (
+                <div className="sh-card">
+                  <div className="sh-card-header"><h3 className="sh-card-title">🌡️ Temperature Control</h3></div>
+                  <div className="sh-temp-widget">
+                    <div className="sh-temp-row">
+                      <div className="sh-temp-header">
+                        <span className="sh-temp-name">❌️ Bedroom AC</span>
+                        <div className={`sh-mini-toggle ${devices.bedAC ? 'on' : ''}`} onClick={() => toggleDevice('bedAC')}><div className="sh-mini-knob"/></div>
+                      </div>
+                      <div className="sh-temp-val">{acTemp}<span>°C</span></div>
+                      <input type="range" min={16} max={30} value={acTemp}
+                        className="sh-temp-slider"
+                        style={{ '--pct': `${((acTemp-16)/(30-16))*100}%` }}
+                        onChange={e => setAcTemp(Number(e.target.value))}
+                      />
+                      <div className="sh-temp-range"><span>16°C</span><span>Cool</span><span>30°C</span></div>
+                    </div>
+                    <div className="sh-temp-row">
+                      <div className="sh-temp-header">
+                        <span className="sh-temp-name">🌡️ Thermostat</span>
+                        <div className={`sh-mini-toggle ${devices.bedThermostat ? 'on' : ''}`} onClick={() => toggleDevice('bedThermostat')}><div className="sh-mini-knob"/></div>
+                      </div>
+                      <div className="sh-temp-val">{thermoTemp}<span>°C</span></div>
+                      <input type="range" min={18} max={32} value={thermoTemp}
+                        className="sh-temp-slider"
+                        style={{ '--pct': `${((thermoTemp-18)/(32-18))*100}%` }}
+                        onChange={e => setThermoTemp(Number(e.target.value))}
+                      />
+                      <div className="sh-temp-range"><span>18°C</span><span>Warm</span><span>32°C</span></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* API status card */}
+              <div className="sh-card" style={{ borderColor: apiOnline ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)', background: apiOnline ? 'rgba(34,197,94,.04)' : 'rgba(239,68,68,.04)' }}>
+                <div className="sh-card-header">
+                  <h3 className="sh-card-title">🔌 Backend Status</h3>
+                  <span style={{ fontSize: '.72rem', fontWeight: 700, color: apiOnline ? '#22c55e' : '#ef4444' }}>{apiOnline ? '✓ Online' : '✗ Offline'}</span>
+                </div>
+                <div style={{ fontSize: '.78rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>FastAPI Backend</span><span style={{ color: apiOnline ? '#22c55e' : '#ef4444' }}>{apiOnline ? '●' : '○'} localhost:8000</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>MQTT Bridge</span><span style={{ color: '#f59e0b' }}>● Simulated</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Device Sync</span><span style={{ color: apiOnline ? '#22c55e' : 'var(--muted)' }}>{apiOnline ? 'Live' : 'Local only'}</span></div>
+                  {!apiOnline && <div style={{ marginTop: '.5rem', fontSize: '.72rem', color: '#f59e0b', padding: '.4rem .6rem', borderRadius: '8px', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)' }}>
+                    ⚠️ Start backend: <code>uvicorn main:app --reload --port 8000</code>
+                  </div>}
+                </div>
+              </div>
+
+            </div>{/* end right column */}
+          </div>{/* end two-col */}
+
+          {/* ── OVERVIEW TAB ── */}
+          {tab === 'overview' && (
+            <div className="sh-card">
               <div className="sh-dv-hdr">
-                <h3>⚡ All Devices ({onCount} ON)</h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <h3 className="sh-card-title">💡 All Devices ({onCount} on · {22 - onCount} off)</h3>
+                <div style={{ display: 'flex', gap: '.5rem' }}>
                   <button className="sh-all-btn on"  onClick={() => { applyScene('allOn');  publish('home/all', {c:'all_on'}) }}>All ON</button>
                   <button className="sh-all-btn off" onClick={() => { applyScene('allOff'); publish('home/all', {c:'all_off'}) }}>All OFF</button>
                 </div>
               </div>
-              {/* Group by room */}
               {['Living Room','Master Bedroom','Kids Room','Kitchen','Study Room','Bathroom','Outdoor / Security'].map(room => {
                 const roomDevs = DEVICE_DEFS.filter(d => d.room === room || (room === 'Outdoor / Security' && ['Main Door','Outdoor','System'].includes(d.room)))
                 if (!roomDevs.length) return null
@@ -1250,10 +1477,12 @@ export default function SmartHome({ externalSign }) {
                 )
               })}
             </div>
+          )}
 
-            {/* Command history */}
-            <div className="db-card">
-              <h3>📋 Command History</h3>
+          {/* Command history */}
+          {tab === 'overview' && (
+            <div className="sh-card">
+              <div className="sh-card-header"><h3 className="sh-card-title">📋 Command History</h3></div>
               <div className="sh-hist-list">
                 {cmdHistory.length === 0 && <div className="sh-mqtt-empty">No commands yet — use gestures or click devices</div>}
                 {cmdHistory.slice(0, 15).map(c => (
@@ -1265,103 +1494,133 @@ export default function SmartHome({ externalSign }) {
                 ))}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── FLOOR PLAN TAB ── */}
-        {tab === 'floorplan' && (
-          <div className="sh-tab-main" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div className="db-card">
-              <HomePlan2D devices={devices} onDeviceToggle={toggleDevice}/>
+          {/* ── FLOOR PLAN TAB ── */}
+          {tab === 'floorplan' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="sh-card"><HomePlan2D devices={devices} onDeviceToggle={toggleDevice}/></div>
+              <div className="sh-card"><MQTTLog logs={mqttLogs} height="220px" /></div>
             </div>
-            <div className="db-card">
-              <MQTTLog logs={mqttLogs} height="220px" />
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* ── SECURITY TAB ── */}
-        {tab === 'security' && (
-          <div className="sh-tab-full">
-            <div className="db-card"><SecurityPanel devices={devices} onToggle={toggleDevice}/></div>
-          </div>
-        )}
+          {/* ── SECURITY TAB ── */}
+          {tab === 'security' && (
+            <div className="sh-card"><SecurityPanel devices={devices} onToggle={toggleDevice}/></div>
+          )}
 
-        {/* ── ENERGY TAB ── */}
-        {tab === 'energy' && (
-          <div className="sh-tab-full">
-            <div className="db-card sh-energy-card">
-              <h3>⚡ Live Energy Monitor</h3>
-              <EnergyPanel devices={devices}/>
-            </div>
-            <div className="db-card" style={{ marginTop: '1.25rem' }}>
-              <h3>📊 Device Consumption Breakdown</h3>
-              <div className="sh-watt-list">
-                {DEVICE_DEFS.filter(d => d.watt > 0).sort((a, b) => b.watt - a.watt).map(d => (
-                  <div key={d.id} className="sh-watt-row">
-                    <span className="sh-watt-icon">{d.icon}</span>
-                    <div className="sh-watt-info">
-                      <span className="sh-watt-name">{d.name}</span>
-                      <span className="sh-watt-room">{d.room}</span>
-                    </div>
-                    <div className="sh-watt-bar-wrap">
-                      <div className="sh-watt-bar" style={{ width: `${(d.watt / 1500) * 100}%`, background: devices[d.id] ? d.color : 'rgba(75,85,99,0.3)' }}/>
-                    </div>
-                    <span className="sh-watt-val" style={{ color: devices[d.id] ? d.color : 'var(--muted)' }}>{devices[d.id] ? d.watt : 0}W</span>
-                    <div className={`sh-mini-toggle ${devices[d.id] ? 'on' : ''}`} style={{ '--acc': d.color }} onClick={() => toggleDevice(d.id)}><div className="sh-mini-knob"/></div>
+          {/* ── ENERGY TAB ── */}
+          {tab === 'energy' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="sh-card">
+                <div className="sh-card-header"><h3 className="sh-card-title">⚡ Live Energy Monitor</h3></div>
+                <EnergyPanel devices={devices}/>
+              </div>
+              {analytics && (
+                <div className="sh-card">
+                  <div className="sh-card-header">
+                    <h3 className="sh-card-title">📈 7-Day Usage</h3>
+                    <span className="sh-card-badge">{analytics.total_kwh_week} kWh this week · ₹{analytics.total_cost_week}</span>
                   </div>
-                ))}
+                  <div className="sh-echart">
+                    {analytics.week.map((d, i) => {
+                      const maxKwh = Math.max(...analytics.week.map(x => x.kwh))
+                      const pct = (d.kwh / maxKwh) * 100
+                      const isToday = i === analytics.week.length - 1
+                      return (
+                        <div key={i} className="sh-echart-bar-wrap">
+                          <div className="sh-echart-val">{d.kwh}</div>
+                          <div className={`sh-echart-bar ${isToday ? 'today' : ''}`} style={{ height: `${pct}%` }} title={`${d.date}: ${d.kwh} kWh · ₹${d.cost}`}/>
+                          <div className="sh-echart-label">{d.label}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--teal)', fontFamily: 'Outfit' }}>{analytics.total_kwh_week}</div>
+                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>kWh this week</div>
+                    </div>
+                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--amber)', fontFamily: 'Outfit' }}>₹{analytics.total_cost_week}</div>
+                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>Est. weekly cost</div>
+                    </div>
+                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#818cf8', fontFamily: 'Outfit' }}>{analytics.devices_on_now}</div>
+                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>Devices on now</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── AUTOMATIONS TAB ── */}
+          {tab === 'automations' && (
+            <div className="sh-card"><AutomationsPanel /></div>
+          )}
+
+          {/* ── CURTAINS TAB ── */}
+          {tab === 'curtains' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="sh-card">
+                <div className="sh-card-header"><h3 className="sh-card-title">🪟 Curtain & Blind Control</h3></div>
+                <p style={{ fontSize: '.82rem', color: 'var(--muted)', marginBottom: '1.25rem' }}>Use gesture <strong style={{ color: 'var(--teal)' }}>U</strong> to toggle all</p>
+                <CurtainWidget devices={devices} onToggle={toggleDevice}/>
+              </div>
+              <div className="sh-card">
+                <div className="sh-card-header"><h3 className="sh-card-title">👀 Visual Preview</h3></div>
+                <svg viewBox="0 0 600 200" style={{ width: '100%', background: 'rgba(0,0,0,.3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                  {['Living Room','Bedroom','Kids Room'].map((room, i) => {
+                    const devId = ['livingCurtain','bedCurtain','kidsCurtain'][i]
+                    const colors = ['#c084fc','#f9a8d4','#fda4af']
+                    const x = 30 + i * 200, w = 150, h = 140
+                    const isOpen = devices[devId]
+                    return (
+                      <g key={room}>
+                        <rect x={x} y={20} width={w} height={h} rx="8" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.08)" strokeWidth="1"/>
+                        {isOpen && <rect x={x+20} y={20} width={w-40} height="30" fill={`${colors[i]}18`}/>}
+                        <text x={x+w/2} y={40} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,.4)" fontFamily="Outfit">{room}</text>
+                        <Curtain x={x+25} y={50} w={100} h={85} open={isOpen} color={colors[i]}/>
+                        <text x={x+w/2} y={175} textAnchor="middle" fontSize="9" fill={isOpen ? colors[i] : 'rgba(107,114,128,.7)'} fontFamily="Outfit" fontWeight="700">{isOpen ? '⬅ OPEN ➡' : '➡ CLOSED ⬅'}</text>
+                      </g>
+                    )
+                  })}
+                </svg>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── AUTOMATIONS TAB ── */}
-        {tab === 'automations' && (
-          <div className="sh-tab-full">
-            <AutomationsPanel/>
-          </div>
-        )}
+        </main>{/* end sh-page */}
 
-        {/* ── CURTAINS TAB ── */}
-        {tab === 'curtains' && (
-          <div className="sh-tab-full">
-            <div className="db-card">
-              <h3>🪟 Curtain & Blind Control</h3>
-              <p style={{ fontSize: '0.82rem', color: 'var(--muted)', marginBottom: '1.25rem' }}>Real-time curtain animation — panels slide open/closed. Use gesture <strong style={{ color: 'var(--teal)' }}>U</strong> to toggle all.</p>
-              <CurtainWidget devices={devices} onToggle={toggleDevice}/>
+        {/* ── NOTIFICATION PANEL ── */}
+        {showNotifPanel && (
+          <div className="sh-notif-panel">
+            <div className="sh-notif-header">
+              <h3 className="sh-notif-title">🔔 Notifications</h3>
+              <button className="sh-notif-close" onClick={() => setShowNotifPanel(false)}>×</button>
             </div>
-            {/* Live preview of curtains in SVG */}
-            <div className="db-card" style={{ marginTop: '1.25rem' }}>
-              <h3>👀 Visual Preview</h3>
-              <svg viewBox="0 0 600 200" style={{ width: '100%', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                {['Living Room', 'Bedroom', 'Kids Room'].map((room, i) => {
-                  const devId = ['livingCurtain', 'bedCurtain', 'kidsCurtain'][i]
-                  const colors = ['#c084fc', '#f9a8d4', '#fda4af']
-                  const x = 30 + i * 200, w = 150, h = 140
-                  const isOpen = devices[devId]
-                  return (
-                    <g key={room}>
-                      {/* Room box */}
-                      <rect x={x} y={20} width={w} height={h} rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-                      {/* Light effect when open */}
-                      {isOpen && <rect x={x + 20} y={20} width={w - 40} height="30" fill={`${colors[i]}18`}/>}
-                      {/* Room label */}
-                      <text x={x + w / 2} y={40} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.4)" fontFamily="Outfit,sans-serif">{room}</text>
-                      {/* Curtain window */}
-                      <Curtain x={x + 25} y={50} w={100} h={85} open={isOpen} color={colors[i]}/>
-                      {/* State label */}
-                      <text x={x + w / 2} y={175} textAnchor="middle" fontSize="9" fill={isOpen ? colors[i] : 'rgba(107,114,128,0.7)'} fontFamily="Outfit,sans-serif" fontWeight="700">
-                        {isOpen ? '⬅ OPEN ➡' : '➡ CLOSED ⬅'}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
+            <div className="sh-notif-list">
+              {notifications.length === 0 && <div className="sh-notif-empty">🎉 All caught up!</div>}
+              {notifications.slice(0, 20).map(n => (
+                <div key={n.id} className={`sh-notif-item ${!n.read ? 'unread' : ''}`}>
+                  <span className="sh-notif-ico">{n.icon}</span>
+                  <div className="sh-notif-body">
+                    <div className="sh-notif-ntitle">{n.title}</div>
+                    <div className="sh-notif-msg">{n.message}</div>
+                  </div>
+                  <span className="sh-notif-time">{n.timestamp}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
-      </div>
-    </div>
+
+      </div>{/* end sh-main */}
+
+      {/* Toast */}
+      {toast && <CommandToast toast={toast}/>}
+
+    </div>  /* end sh-root */
   )
 }
