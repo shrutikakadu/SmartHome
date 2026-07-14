@@ -1,0 +1,84 @@
+/* Voice & Speech */
+.vs-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.vs-textarea {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  resize: vertical;
+  outline: none;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+.vs-textarea:focus { border-color: var(--border2); }
+
+/* Waveform */
+.vs-waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 48px;
+  padding: 4px;
+  background: var(--surface2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.vs-wave-bar {
+  flex: 1;
+  background: rgba(99,102,241,0.3);
+  border-radius: 4px;
+  height: 30%;
+  transition: height 0.1s;
+}
+.vs-waveform.active .vs-wave-bar {
+  animation: wave 0.8s ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+  background: var(--purple);
+}
+@keyframes wave {
+  0% { height: 10%; }
+  100% { height: 90%; }
+}
+
+.vs-stt-display { display: flex; flex-direction: column; gap: 0; }
+
+.vs-sign-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.vs-sign-display {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.vs-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 3rem;
+  position: relative;
+}
+.vs-avatar-hand {
+  font-size: 1.8rem;
+  animation: handWave 1s ease-in-out infinite alternate;
+}
+@keyframes handWave {
+  0% { transform: rotate(-15deg); }
+  100% { transform: rotate(15deg); }
+}

@@ -1,17 +1,18 @@
 /* ================================================================
    Landing Page CSS — GestureHome
-   Premium dark glassmorphism design
-================================================================ */
+   Premium dark glassmorphism design · Responsive · Accessible
+=============================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap');
 
 /* ── Reset & Base ── */
 .lp-root {
   font-family: 'Inter', sans-serif;
-  background: #060912;
+  background: #050911;
   color: #e2e8f0;
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  scroll-behavior: smooth;
 }
 
 /* ── Particles ── */
@@ -37,6 +38,10 @@
   0%   { transform: rotateX(0deg); }
   100% { transform: rotateX(-20deg); }
 }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
 
 /* ── Navbar ── */
 .lp-nav {
@@ -46,8 +51,9 @@
   right: 0;
   z-index: 100;
   backdrop-filter: blur(24px);
-  background: rgba(6, 9, 18, 0.75);
+  background: rgba(5, 9, 17, 0.8);
   border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+  transition: background .3s;
 }
 .lp-nav-inner {
   max-width: 1200px;
@@ -118,6 +124,49 @@
   box-shadow: 0 4px 18px rgba(45,212,191,0.3);
 }
 .lp-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(45,212,191,0.45); }
+
+/* Mobile hamburger for landing nav */
+.lp-hamburger {
+  display: none;
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all .2s;
+}
+
+/* Mobile nav dropdown */
+.lp-nav-mobile {
+  display: none;
+  position: fixed;
+  top: 68px; left: 0; right: 0;
+  background: rgba(5, 9, 17, 0.97);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(45, 212, 191, 0.1);
+  padding: 1rem 2rem;
+  z-index: 99;
+  animation: slideDown .25s ease;
+}
+.lp-nav-mobile.open { display: flex; flex-direction: column; gap: .5rem; }
+.lp-nav-mobile .lp-nav-link {
+  display: block; padding: .6rem .9rem; font-size: 1rem;
+}
+.lp-nav-mobile .lp-btn-ghost,
+.lp-nav-mobile .lp-btn-primary {
+  width: 100%; text-align: center; padding: .6rem; font-size: .95rem;
+}
+.lp-nav-mobile .lp-nav-ctas { display: flex; gap: .75rem; margin-top: .5rem; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Section helpers ── */
 .lp-section-inner {
@@ -215,10 +264,6 @@
   box-shadow: 0 0 8px #2dd4bf;
   animation: pulse 1.5s infinite;
 }
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.6; }
-}
 
 .lp-hero-title {
   font-family: 'Outfit', sans-serif;
@@ -261,6 +306,7 @@
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 14px 48px rgba(45,212,191,0.5);
 }
+.lp-hero-btn-primary:active { transform: scale(0.97); }
 .lp-hero-btn-ghost {
   display: inline-flex; align-items: center; gap: 0.6rem;
   padding: 0.85rem 1.75rem;
@@ -281,6 +327,7 @@
   color: #e2e8f0;
   background: rgba(45,212,191,0.06);
 }
+.lp-hero-btn-ghost:active { transform: scale(0.97); }
 .lp-hero-badges { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .lp-badge-pill {
   padding: 0.28rem 0.8rem;
@@ -339,6 +386,7 @@
 .lp-phone-dot.red    { background: #ef4444; }
 .lp-phone-dot.yellow { background: #f59e0b; }
 .lp-phone-dot.green  { background: #22c55e; }
+.lp-phone-title { margin-left: 0.5rem; font-size: 0.65rem; color: #64748b; }
 .lp-phone-dash { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
 .lp-phone-greeting {
   font-family: 'Outfit', sans-serif;
@@ -353,6 +401,7 @@
   color: #22c55e;
   animation: pulse 1.5s infinite;
 }
+.lp-status-count { color: #64748b; font-size: 0.7rem; }
 .lp-phone-devices { display: flex; flex-direction: column; gap: 0.4rem; }
 .lp-phone-device {
   display: flex;
@@ -397,6 +446,7 @@
   color: #94a3b8;
   animation: gestureGlow 2s ease-in-out infinite alternate;
 }
+.lp-gesture-highlight { color: #2dd4bf; }
 @keyframes gestureGlow {
   0% { box-shadow: 0 0 0 rgba(45,212,191,0); }
   100% { box-shadow: 0 0 12px rgba(45,212,191,0.2); }
@@ -678,4 +728,28 @@
   .lp-gesture-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-stats-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-nav-links { display: none; }
+  .lp-nav-ctas { display: none; }
+  .lp-hamburger { display: flex; }
+  .lp-hero-title { font-size: clamp(2rem, 5vw, 3rem); }
+  .lp-hero-sub { font-size: 1rem; }
+  .lp-section-inner { padding: 0 1.25rem; }
+}
+@media (max-width: 480px) {
+  .lp-gesture-grid { grid-template-columns: 1fr; }
+  .lp-stats-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .lp-hero { padding-top: 100px; padding-left: 1.25rem; padding-right: 1.25rem; }
+  .lp-hero-ctas { flex-direction: column; }
+  .lp-hero-btn-primary, .lp-hero-btn-ghost { width: 100%; justify-content: center; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .lp-particle,
+  .lp-hero-phone,
+  .lp-hand-wrap,
+  .lp-badge-dot,
+  .lp-status-live,
+  .lp-phone-gesture-bar {
+    animation: none !important;
+  }
 }

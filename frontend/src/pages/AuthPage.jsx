@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { authAPI } from '../utils/api'
 import './auth.css'
-
-const DEMO_USERS = [
-  { email: 'admin@home.com', password: 'admin123', name: 'Alex' },
-]
 
 function EyeIcon({ open }) {
   return open ? (
@@ -31,7 +28,6 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [shake, setShake] = useState(false)
 
-  // Redirect if already logged in
   useEffect(() => {
     const user = localStorage.getItem('smarthome_user')
     if (user) navigate('/dashboard', { replace: true })
@@ -51,35 +47,39 @@ export default function AuthPage() {
     if (Object.keys(e).length) { setErrors(e); setShake(true); setTimeout(() => setShake(false), 600); return }
     setErrors({})
     setLoading(true)
-    await new Promise(r => setTimeout(r, 900))
 
-    if (mode === 'login') {
-      // Check demo users or any stored user
-      const stored = JSON.parse(localStorage.getItem('smarthome_accounts') || '[]')
-      const allUsers = [...DEMO_USERS, ...stored]
-      const found = allUsers.find(u => u.email === form.email && u.password === form.password)
-      if (!found) {
-        setErrors({ password: 'Invalid email or password' })
-        setShake(true); setTimeout(() => setShake(false), 600)
-        setLoading(false); return
+    try {
+      let data
+      if (mode === 'login') {
+        data = await authAPI.login(form.email, form.password)
+      } else {
+        data = await authAPI.register(form.name, form.email, form.password)
       }
-      localStorage.setItem('smarthome_user', JSON.stringify({ name: found.name, email: found.email }))
-    } else {
-      // Sign up — save new user
-      const stored = JSON.parse(localStorage.getItem('smarthome_accounts') || '[]')
-      const exists = stored.find(u => u.email === form.email) || DEMO_USERS.find(u => u.email === form.email)
-      if (exists) {
-        setErrors({ email: 'Email already registered. Try logging in.' })
-        setShake(true); setTimeout(() => setShake(false), 600)
-        setLoading(false); return
+
+      localStorage.setItem('smarthome_user', JSON.stringify({
+        name: data.user.name,
+        email: data.user.email,
+        token: data.token,
+        role: data.user.role,
+      }))
+
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Something went wrong'
+      if (msg.toLowerCase().includes('email') && !msg.toLowerCase().includes('password')) {
+        setErrors({ email: msg })
+      } else if (msg.toLowerCase().includes('password')) {
+        setErrors({ password: msg })
+      } else if (msg.toLowerCase().includes('name')) {
+        setErrors({ name: msg })
+      } else {
+        setErrors({ password: msg })
       }
-      stored.push({ name: form.name, email: form.email, password: form.password })
-      localStorage.setItem('smarthome_accounts', JSON.stringify(stored))
-      localStorage.setItem('smarthome_user', JSON.stringify({ name: form.name, email: form.email }))
+      setShake(true)
+      setTimeout(() => setShake(false), 600)
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
-    navigate('/dashboard', { replace: true })
   }
 
   const switchMode = () => {
@@ -117,7 +117,7 @@ export default function AuthPage() {
           <div className="auth-brand">
             <div className="auth-brand-icon">🏠</div>
             <div>
-              <div className="auth-brand-name">GestureHome</div>
+              <div className="auth-brand-name">Smart Home</div>
               <div className="auth-brand-tagline">Sign Language Smart Automation</div>
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function AuthPage() {
             <p className="auth-subtitle">
               {mode === 'login'
                 ? 'Sign in to your smart home dashboard'
-                : 'Set up your GestureHome account'}
+                : 'Set up your Smart Home account'}
             </p>
           </div>
 

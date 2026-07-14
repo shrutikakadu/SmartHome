@@ -1,0 +1,20 @@
+/* AI Training Page */
+.ai-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.ai-upload-zone:hover {
+  border-color: var(--border2);
+  background: var(--purple-dim);
+}
+.ai-upload-icon { font-size: 2.5rem; opacity: 0.5; }
+.ai-upload-text { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+.ai-upload-hint { font-size: 0.7rem; color: var(--text3); }

@@ -1,0 +1,95 @@
+/* Dashboard Page */
+.db-welcome {
+  margin-bottom: 20px;
+}
+.db-welcome h1 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.db-welcome p {
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+
+/* Quick Actions */
+.db-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.db-qa-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.db-qa-btn:hover {
+  border-color: var(--border2);
+  background: var(--purple-dim);
+  color: var(--purple);
+  transform: translateY(-2px);
+}
+.db-qa-btn.active {
+  background: var(--purple-dim);
+  border-color: var(--purple);
+  color: var(--purple);
+}
+
+/* Activity List */
+.db-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.db-activity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.db-activity-row:hover { background: var(--surface2); }
+.db-activity-icon { font-size: 1.1rem; width: 28px; text-align: center; flex-shrink: 0; }
+.db-activity-info { flex: 1; }
+.db-activity-action { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+.db-activity-room { font-size: 0.7rem; color: var(--text2); }
+.db-activity-time { font-size: 0.7rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+/* AI Status */
+.db-ai-status { display: flex; flex-direction: column; gap: 10px; }
+.db-ai-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.78rem;
+}
+.db-ai-row:last-of-type { border-bottom: none; }
+.db-ai-label { color: var(--text2); }
+.db-ai-val { font-weight: 600; color: var(--text); }
+
+/* Progress */
+.db-progress-track {
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.db-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}

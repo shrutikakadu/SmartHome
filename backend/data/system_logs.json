@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1784019555196,
+    "message": "New user registered: himanshu Gulhane",
+    "time": "14:29",
+    "level": "info"
+  },
+  {
+    "id": 1784018546656,
+    "message": "User logged in: Alex",
+    "time": "14:12",
+    "level": "info"
+  },
+  {
+    "id": 1,
+    "message": "System started",
+    "time": "14:01",
+    "level": "info"
+  }
+]

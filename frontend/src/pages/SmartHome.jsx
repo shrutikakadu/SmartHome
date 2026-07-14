@@ -359,24 +359,8 @@ function HomePlan2D({ devices, onDeviceToggle }) {
       </div>
 
       {statusMsg && (
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
-          background: 'rgba(15, 23, 42, 0.95)',
-          border: '1px solid var(--indigo)',
-          padding: '8px 16px',
-          borderRadius: '8px',
-          fontSize: '0.88rem',
-          color: '#fff',
-          zIndex: 10,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          pointerEvents: 'none'
-        }}>
-          <span style={{ color: '#10b981' }}>⚡</span>
+        <div className="sh-floor-toast">
+          <span style={{ color: 'var(--green)' }}>⚡</span>
           <span><strong>{statusMsg.name}</strong> ({statusMsg.room}) status is now <strong>{statusMsg.state}</strong></span>
         </div>
       )}
@@ -1011,6 +995,10 @@ export default function SmartHome({ externalSign }) {
   const [clock, setClock] = useState('')
   const [acTemp, setAcTemp] = useState(22)
   const [thermoTemp, setThermoTemp] = useState(25)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [editName, setEditName] = useState(user.name || '')
+  const [editEmail, setEditEmail] = useState(user.email || '')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // ── Live clock ──
   useEffect(() => {
@@ -1211,11 +1199,16 @@ export default function SmartHome({ externalSign }) {
   return (
     <div className="sh-root">
 
+      {/* ══ MOBILE HAMBURGER ══ */}
+      <button className="sh-mobile-toggle" onClick={() => setSidebarOpen(o => !o)}>
+        {sidebarOpen ? '✕' : '☰'}
+      </button>
+
       {/* ══ SIDEBAR ══ */}
-      <aside className="sh-sidebar">
+      <aside className={`sh-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sh-sidebar-logo">🏠</div>
         {SIDE_TABS.map(t => (
-          <button key={t.id} className={`sh-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+          <button key={t.id} className={`sh-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setSidebarOpen(false); }}>
             {t.icon}
             <span className="sh-nav-tooltip">{t.label}</span>
           </button>
@@ -1226,6 +1219,7 @@ export default function SmartHome({ externalSign }) {
           <div className="sh-api-label">{apiOnline ? 'API' : 'OFF'}</div>
         </div>
       </aside>
+      <div className={`sh-sidebar-overlay ${sidebarOpen ? 'visible' : ''}`} onClick={() => setSidebarOpen(false)} />
 
       {/* ══ MAIN ══ */}
       <div className="sh-main">
@@ -1234,7 +1228,7 @@ export default function SmartHome({ externalSign }) {
         <header className="sh-topbar">
           <div className="sh-topbar-title">
             <span>Gesture</span>Home
-            {user.name && <span style={{ fontSize: '.8rem', fontWeight: 500, color: 'var(--muted)', marginLeft: '.75rem' }}>· {user.name}</span>}
+            {user.name && <span className="sh-topbar-greeting">· {user.name}</span>}
           </div>
 
           {/* Weather */}
@@ -1256,13 +1250,14 @@ export default function SmartHome({ externalSign }) {
           </button>
 
           {/* User + logout */}
-          <div className="sh-user-pill" onClick={handleLogout} title="Click to logout">
+          <div className="sh-user-pill" onClick={() => { setEditName(user.name || ''); setEditEmail(user.email || ''); setShowProfileModal(true); }} title="Click to edit profile">
             <div className="sh-user-avatar">{(user.name || 'U')[0].toUpperCase()}</div>
             <div>
               <div className="sh-user-name">{user.name || 'User'}</div>
-              <div className="sh-logout-label">Logout →</div>
+              <div className="sh-logout-label">Edit Profile</div>
             </div>
           </div>
+          <button className="sh-logout-btn" onClick={handleLogout} title="Logout">⏻</button>
         </header>
 
         {/* ── PAGE CONTENT ── */}
@@ -1307,7 +1302,7 @@ export default function SmartHome({ externalSign }) {
 
           {/* ── MAIN TWO-COL CONTENT ── */}
           <div className="sh-two-col">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="sh-col-stack">
 
           {/* ── GESTURE CAMERA (always visible on left) ── */}
           {(tab === 'overview' || tab === 'floorplan') && (
@@ -1320,8 +1315,8 @@ export default function SmartHome({ externalSign }) {
                 <p className="sh-cam-sub">Show a hand sign → your home reacts in real time</p>
                 <div className="sh-cam-wrap">
                   <video ref={videoRef} autoPlay playsInline muted
-                    style={{ display: camActive ? 'block' : 'none', width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, transform: 'scaleX(-1)' }}/>
-                  {camActive && <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2, pointerEvents: 'none', objectFit: 'cover' }}/>}
+                    className="sh-cam-video" style={{ display: camActive ? 'block' : 'none' }}/>
+                  {camActive && <canvas ref={canvasRef} className="sh-cam-canvas"/>}
                   {camActive && <div className="sh-cam-hud"><div className="camera-scan-line"/><span className="sh-cam-badge">🔴 GESTURE ACTIVE</span></div>}
                   {camError && <div className="sh-cam-err">{camError}</div>}
                   {!camActive && !camError && <div className="sh-cam-idle"><span>🏠</span><p>Gesture Control Off</p><p className="sh-cam-hint">Show hand sign to control your home</p></div>}
@@ -1332,14 +1327,14 @@ export default function SmartHome({ externalSign }) {
                     </div>
                   )}
                 </div>
-                <button className={`btn-camera ${camActive ? 'stop' : 'start'}`} onClick={camActive ? stopCam : startCam} style={{ width: '100%', marginTop: '0.75rem' }}>
+                <button className={`btn-camera ${camActive ? 'stop' : 'start'}`} onClick={camActive ? stopCam : startCam}>
                   {camActive ? '⏹ Stop Gesture Control' : '▶ Start Gesture Control'}
                 </button>
               </div>
 
               {/* Scene presets */}
-              <div className="db-card">
-                <h3>🎬 Scenes</h3>
+              <div className="sh-card">
+                <div className="sh-card-header"><h3 className="sh-card-title">🎬 Scenes</h3></div>
                 <div className="sh-scenes-mini">
                   {SCENE_CARDS.map(sc => (
                     <div key={sc.id} className={`sh-sc-mini ${activeScene === sc.id ? 'active' : ''}`}
@@ -1382,7 +1377,7 @@ export default function SmartHome({ externalSign }) {
             </div>{/* end left column */}
 
             {/* ── RIGHT SIDEBAR: Scenes + Temp Control ── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="sh-col-stack">
 
               {/* Scenes */}
               <div className="sh-card">
@@ -1407,7 +1402,7 @@ export default function SmartHome({ externalSign }) {
                   <div className="sh-temp-widget">
                     <div className="sh-temp-row">
                       <div className="sh-temp-header">
-                        <span className="sh-temp-name">❌️ Bedroom AC</span>
+                        <span className="sh-temp-name">❄️ Bedroom AC</span>
                         <div className={`sh-mini-toggle ${devices.bedAC ? 'on' : ''}`} onClick={() => toggleDevice('bedAC')}><div className="sh-mini-knob"/></div>
                       </div>
                       <div className="sh-temp-val">{acTemp}<span>°C</span></div>
@@ -1436,16 +1431,16 @@ export default function SmartHome({ externalSign }) {
               )}
 
               {/* API status card */}
-              <div className="sh-card" style={{ borderColor: apiOnline ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)', background: apiOnline ? 'rgba(34,197,94,.04)' : 'rgba(239,68,68,.04)' }}>
+              <div className="sh-card" style={{ borderColor: apiOnline ? 'rgba(34,197,94,.2)' : 'rgba(239,68,68,.2)' }}>
                 <div className="sh-card-header">
                   <h3 className="sh-card-title">🔌 Backend Status</h3>
-                  <span style={{ fontSize: '.72rem', fontWeight: 700, color: apiOnline ? '#22c55e' : '#ef4444' }}>{apiOnline ? '✓ Online' : '✗ Offline'}</span>
+                  <span className={`sh-card-badge`} style={{ background: apiOnline ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.12)', color: apiOnline ? 'var(--green)' : 'var(--red)', borderColor: apiOnline ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)' }}>{apiOnline ? '✓ Online' : '✗ Offline'}</span>
                 </div>
-                <div style={{ fontSize: '.78rem', color: 'var(--muted)', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>FastAPI Backend</span><span style={{ color: apiOnline ? '#22c55e' : '#ef4444' }}>{apiOnline ? '●' : '○'} localhost:8000</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>MQTT Bridge</span><span style={{ color: '#f59e0b' }}>● Simulated</span></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Device Sync</span><span style={{ color: apiOnline ? '#22c55e' : 'var(--muted)' }}>{apiOnline ? 'Live' : 'Local only'}</span></div>
-                  {!apiOnline && <div style={{ marginTop: '.5rem', fontSize: '.72rem', color: '#f59e0b', padding: '.4rem .6rem', borderRadius: '8px', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)' }}>
+                <div className="sh-api-card">
+                  <div className="sh-api-card-row"><span>FastAPI Backend</span><span style={{ color: apiOnline ? 'var(--green)' : 'var(--red)' }}>{apiOnline ? '●' : '○'} localhost:8000</span></div>
+                  <div className="sh-api-card-row"><span>MQTT Bridge</span><span style={{ color: 'var(--amber)' }}>● Simulated</span></div>
+                  <div className="sh-api-card-row"><span>Device Sync</span><span style={{ color: apiOnline ? 'var(--green)' : 'var(--muted)' }}>{apiOnline ? 'Live' : 'Local only'}</span></div>
+                  {!apiOnline && <div style={{ marginTop: '.5rem', fontSize: '.72rem', color: 'var(--amber)', padding: '.4rem .6rem', borderRadius: '8px', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)' }}>
                     ⚠️ Start backend: <code>uvicorn main:app --reload --port 8000</code>
                   </div>}
                 </div>
@@ -1498,7 +1493,7 @@ export default function SmartHome({ externalSign }) {
 
           {/* ── FLOOR PLAN TAB ── */}
           {tab === 'floorplan' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="sh-col-stack">
               <div className="sh-card"><HomePlan2D devices={devices} onDeviceToggle={toggleDevice}/></div>
               <div className="sh-card"><MQTTLog logs={mqttLogs} height="220px" /></div>
             </div>
@@ -1511,7 +1506,7 @@ export default function SmartHome({ externalSign }) {
 
           {/* ── ENERGY TAB ── */}
           {tab === 'energy' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="sh-col-stack">
               <div className="sh-card">
                 <div className="sh-card-header"><h3 className="sh-card-title">⚡ Live Energy Monitor</h3></div>
                 <EnergyPanel devices={devices}/>
@@ -1536,18 +1531,18 @@ export default function SmartHome({ externalSign }) {
                       )
                     })}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--teal)', fontFamily: 'Outfit' }}>{analytics.total_kwh_week}</div>
-                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>kWh this week</div>
+                  <div className="sh-ep-stats" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+                    <div className="sh-ep-stat">
+                      <span className="sh-ep-sv" style={{ color: 'var(--teal)' }}>{analytics.total_kwh_week}</span>
+                      <span className="sh-ep-sl">kWh this week</span>
                     </div>
-                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--amber)', fontFamily: 'Outfit' }}>₹{analytics.total_cost_week}</div>
-                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>Est. weekly cost</div>
+                    <div className="sh-ep-stat">
+                      <span className="sh-ep-sv" style={{ color: 'var(--amber)' }}>₹{analytics.total_cost_week}</span>
+                      <span className="sh-ep-sl">Est. weekly cost</span>
                     </div>
-                    <div style={{ flex: 1, padding: '.7rem', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--surface2)', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#818cf8', fontFamily: 'Outfit' }}>{analytics.devices_on_now}</div>
-                      <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>Devices on now</div>
+                    <div className="sh-ep-stat">
+                      <span className="sh-ep-sv" style={{ color: 'var(--indigo)' }}>{analytics.devices_on_now}</span>
+                      <span className="sh-ep-sl">Devices on now</span>
                     </div>
                   </div>
                 </div>
@@ -1562,15 +1557,15 @@ export default function SmartHome({ externalSign }) {
 
           {/* ── CURTAINS TAB ── */}
           {tab === 'curtains' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div className="sh-col-stack">
               <div className="sh-card">
                 <div className="sh-card-header"><h3 className="sh-card-title">🪟 Curtain & Blind Control</h3></div>
-                <p style={{ fontSize: '.82rem', color: 'var(--muted)', marginBottom: '1.25rem' }}>Use gesture <strong style={{ color: 'var(--teal)' }}>U</strong> to toggle all</p>
+                <div className="sh-card-sub">Use gesture <strong style={{ color: 'var(--teal)' }}>U</strong> to toggle all</div>
                 <CurtainWidget devices={devices} onToggle={toggleDevice}/>
               </div>
               <div className="sh-card">
                 <div className="sh-card-header"><h3 className="sh-card-title">👀 Visual Preview</h3></div>
-                <svg viewBox="0 0 600 200" style={{ width: '100%', background: 'rgba(0,0,0,.3)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <svg viewBox="0 0 600 200" className="home-svg">
                   {['Living Room','Bedroom','Kids Room'].map((room, i) => {
                     const devId = ['livingCurtain','bedCurtain','kidsCurtain'][i]
                     const colors = ['#c084fc','#f9a8d4','#fda4af']
@@ -1612,6 +1607,38 @@ export default function SmartHome({ externalSign }) {
                   <span className="sh-notif-time">{n.timestamp}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── PROFILE EDIT MODAL ── */}
+        {showProfileModal && (
+          <div className="sh-modal-overlay" onClick={() => setShowProfileModal(false)}>
+            <div className="sh-profile-modal" onClick={e => e.stopPropagation()}>
+              <div className="sh-modal-header">
+                <h3 className="sh-modal-title">👤 Edit Profile</h3>
+                <button className="sh-modal-close" onClick={() => setShowProfileModal(false)}>×</button>
+              </div>
+              <div className="sh-modal-body">
+                <div className="sh-profile-avatar-large">{(editName || 'U')[0].toUpperCase()}</div>
+                <div className="sh-profile-field">
+                  <label className="sh-profile-label">Name</label>
+                  <input className="sh-profile-input" type="text" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Your name" />
+                </div>
+                <div className="sh-profile-field">
+                  <label className="sh-profile-label">Email</label>
+                  <input className="sh-profile-input" type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Your email" />
+                </div>
+                <div className="sh-profile-actions">
+                  <button className="sh-profile-btn cancel" onClick={() => setShowProfileModal(false)}>Cancel</button>
+                  <button className="sh-profile-btn save" onClick={() => {
+                    const updated = { ...user, name: editName.trim() || user.name, email: editEmail.trim() || user.email }
+                    localStorage.setItem('smarthome_user', JSON.stringify(updated))
+                    setShowProfileModal(false)
+                    window.location.reload()
+                  }}>Save Changes</button>
+                </div>
+              </div>
             </div>
           </div>
         )}

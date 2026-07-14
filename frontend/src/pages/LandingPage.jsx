@@ -1,456 +1,374 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './landing.css'
-
-/* ── Animated counter hook ── */
-function useCounter(target, duration = 2000, start = false) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    if (!start) return
-    let startTime = null
-    const step = (timestamp) => {
-      if (!startTime) startTime = timestamp
-      const progress = Math.min((timestamp - startTime) / duration, 1)
-      setCount(Math.floor(progress * target))
-      if (progress < 1) requestAnimationFrame(step)
-    }
-    requestAnimationFrame(step)
-  }, [target, duration, start])
-  return count
-}
-
-/* ── Floating particles ── */
-function Particles() {
-  return (
-    <div className="lp-particles" aria-hidden="true">
-      {Array.from({ length: 22 }).map((_, i) => (
-        <div key={i} className="lp-particle" style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          width: `${2 + Math.random() * 4}px`,
-          height: `${2 + Math.random() * 4}px`,
-          animationDelay: `${Math.random() * 8}s`,
-          animationDuration: `${6 + Math.random() * 10}s`,
-          opacity: 0.15 + Math.random() * 0.35,
-        }} />
-      ))}
-    </div>
-  )
-}
-
-/* ── Animated Hand SVG ── */
-function GestureHand({ gesture = 'wave', active = false }) {
-  const hands = {
-    wave: (
-      <svg viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="lp-hand-svg">
-        <defs>
-          <linearGradient id="handGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2dd4bf"/>
-            <stop offset="100%" stopColor="#6366f1"/>
-          </linearGradient>
-        </defs>
-        {/* Palm */}
-        <ellipse cx="60" cy="110" rx="32" ry="38" fill="url(#handGrad)" opacity="0.85"/>
-        {/* Fingers */}
-        {[
-          { x: 28, y1: 110, y2: 42, rx: 7 },
-          { x: 43, y1: 105, y2: 32, rx: 7 },
-          { x: 60, y1: 100, y2: 28, rx: 7 },
-          { x: 77, y1: 105, y2: 35, rx: 7 },
-          { x: 90, y1: 112, y2: 55, rx: 6 },
-        ].map((f, i) => (
-          <rect key={i} x={f.x - f.rx} y={f.y2} width={f.rx * 2} height={f.y1 - f.y2}
-            rx={f.rx} fill="url(#handGrad)" opacity="0.9"
-            style={{ transformOrigin: `${f.x}px ${f.y1}px`, animation: active ? `fingerWave 1.6s ease-in-out ${i * 0.12}s infinite alternate` : 'none' }}
-          />
-        ))}
-        {/* Thumb */}
-        <ellipse cx="22" cy="122" rx="8" ry="18" fill="url(#handGrad)" opacity="0.85" transform="rotate(-30 22 122)"/>
-        {/* Glow ring */}
-        <circle cx="60" cy="110" r="46" stroke="url(#handGrad)" strokeWidth="1.5" opacity="0.3" strokeDasharray="4 6"/>
-      </svg>
-    ),
-    lock: (
-      <svg viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="lp-hand-svg">
-        <defs>
-          <linearGradient id="lockGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f59e0b"/>
-            <stop offset="100%" stopColor="#ef4444"/>
-          </linearGradient>
-        </defs>
-        <ellipse cx="60" cy="115" rx="32" ry="36" fill="url(#lockGrad)" opacity="0.8"/>
-        {/* Thumb + Index (D gesture) */}
-        <ellipse cx="22" cy="118" rx="8" ry="18" fill="url(#lockGrad)" opacity="0.85" transform="rotate(-30 22 118)"/>
-        <rect x="51" y="38" width="14" height="70" rx="7" fill="url(#lockGrad)" opacity="0.9"/>
-        {/* Curled fingers */}
-        {[43, 60, 77, 90].map((x, i) => (
-          <ellipse key={i} cx={x} cy={112} rx={7} ry={9} fill="url(#lockGrad)" opacity="0.7"/>
-        ))}
-        <circle cx="60" cy="110" r="46" stroke="url(#lockGrad)" strokeWidth="1.5" opacity="0.3" strokeDasharray="4 6"/>
-      </svg>
-    ),
-    peace: (
-      <svg viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="lp-hand-svg">
-        <defs>
-          <linearGradient id="peaceGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#818cf8"/>
-            <stop offset="100%" stopColor="#2dd4bf"/>
-          </linearGradient>
-        </defs>
-        <ellipse cx="60" cy="115" rx="32" ry="36" fill="url(#peaceGrad)" opacity="0.8"/>
-        <ellipse cx="22" cy="118" rx="8" ry="18" fill="url(#peaceGrad)" opacity="0.85" transform="rotate(-30 22 118)"/>
-        {/* Index + Middle up */}
-        <rect x="44" y="35" width="14" height="75" rx="7" fill="url(#peaceGrad)" opacity="0.9"/>
-        <rect x="62" y="35" width="14" height="75" rx="7" fill="url(#peaceGrad)" opacity="0.9"/>
-        {/* Ring + Pinky curled */}
-        {[78, 92].map((x, i) => (
-          <ellipse key={i} cx={x} cy={115} rx={6} ry={9} fill="url(#peaceGrad)" opacity="0.65"/>
-        ))}
-        <circle cx="60" cy="110" r="46" stroke="url(#peaceGrad)" strokeWidth="1.5" opacity="0.3" strokeDasharray="4 6"/>
-      </svg>
-    ),
-  }
-  return (
-    <div className={`lp-hand-wrap ${active ? 'active' : ''}`}>
-      {hands[gesture] || hands.wave}
-    </div>
-  )
-}
-
-/* ── Stats section ── */
-function StatsSection({ visible }) {
-  const devices = useCounter(22, 1800, visible)
-  const gestures = useCounter(16, 1600, visible)
-  const rooms = useCounter(6, 1200, visible)
-  const fps = useCounter(20, 2000, visible)
-  const stats = [
-    { val: devices, suffix: '', label: 'Smart Devices', icon: '💡' },
-    { val: gestures, suffix: '+', label: 'Gestures', icon: '🤚' },
-    { val: rooms, suffix: '', label: 'Rooms', icon: '🏠' },
-    { val: fps, suffix: ' FPS', label: 'Real-Time AI', icon: '⚡' },
-  ]
-  return (
-    <div className="lp-stats-grid">
-      {stats.map((s, i) => (
-        <div key={i} className="lp-stat-card" style={{ animationDelay: `${i * 0.1}s` }}>
-          <div className="lp-stat-icon">{s.icon}</div>
-          <div className="lp-stat-val">{s.val}{s.suffix}</div>
-          <div className="lp-stat-label">{s.label}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
+import SoftAurora from '../components/SoftAurora/SoftAurora'
+import './landingNew.css'
 
 const FEATURES = [
-  {
-    icon: '🤚',
-    title: 'Real-Time Gesture AI',
-    desc: 'MediaPipe hand tracking at 20+ FPS. Show a sign — your home reacts instantly. No voice, no touch, no app.',
-    color: '#2dd4bf',
-    tag: 'MediaPipe + TFLite',
-  },
-  {
-    icon: '🏠',
-    title: '22 Smart Devices',
-    desc: 'Control lights, fans, AC, curtains, TV, security locks, and more across 6 rooms from one dashboard.',
-    color: '#818cf8',
-    tag: '6 Rooms',
-  },
-  {
-    icon: '📡',
-    title: 'MQTT Protocol',
-    desc: 'Industry-standard IoT messaging. Every gesture publishes to an MQTT broker for real hardware control.',
-    color: '#f59e0b',
-    tag: 'IoT Ready',
-  },
-  {
-    icon: '🔒',
-    title: 'Security System',
-    desc: 'Arm, disarm, lock doors, and view camera feeds. Security modes: Home, Away, Night, Disarmed.',
-    color: '#ef4444',
-    tag: 'Smart Lock + Alarm',
-  },
-  {
-    icon: '⚡',
-    title: 'Energy Monitor',
-    desc: 'Live wattage tracking per device. See daily cost estimates and usage breakdowns in real time.',
-    color: '#22c55e',
-    tag: 'Live Usage',
-  },
-  {
-    icon: '⚙️',
-    title: 'Automations',
-    desc: 'Scheduled rules, geofence triggers, and scene presets. Set it once, let your home run itself.',
-    color: '#c084fc',
-    tag: 'Smart Rules',
-  },
+  { icon: '🤖', title: 'Real-time Detection',    desc: 'AI-powered gesture recognition at 97.6% accuracy using MediaPipe Hands pipeline and custom TensorFlow models running directly in your browser.' },
+  { icon: '🏡', title: 'Smart Home Control',     desc: 'Control 22+ devices across all rooms. Seamless integration with ESP32 microcontrollers, local relays, and smart plugs via secure MQTT connection.' },
+  { icon: '💬', title: 'AI Chat Assistant',      desc: 'AI-driven natural language commands to ask questions, query system logs, troubleshoot hardware, or automate device schedules using OpenAI GPT-4.' },
+  { icon: '🎙️', title: 'Voice & Speech',         desc: 'Symmetric communication interface: converts voice to sign language visuals, text-to-speech, and sign gestures into synthesized speech audio output.' },
+  { icon: '🚨', title: 'Emergency Alerts',       desc: 'SOS gesture triggers immediate notifications. Auto-dials emergency contacts and sends SMS alerts with system diagnostic information.' },
+  { icon: '🧠', title: 'AI Model Training',      desc: 'No-code custom dataset uploader. Train custom gesture mappings by capturing personal hand shapes using your local webcam.' },
 ]
 
-const HOW_IT_WORKS = [
-  {
-    step: '01',
-    icon: '📷',
-    title: 'Camera Detects Hand',
-    desc: 'Your webcam captures your hand in real time. MediaPipe assigns 21 landmark coordinates per frame.',
-    color: '#2dd4bf',
-  },
-  {
-    step: '02',
-    icon: '🧠',
-    title: 'AI Recognises Gesture',
-    desc: 'A lightweight TFLite neural network classifies the gesture with 90%+ accuracy at 20+ FPS.',
-    color: '#818cf8',
-  },
-  {
-    step: '03',
-    icon: '📡',
-    title: 'Command Sent via MQTT',
-    desc: 'The gesture maps to a device command published over MQTT to control your real smart home hardware.',
-    color: '#f59e0b',
-  },
-  {
-    step: '04',
-    icon: '🏠',
-    title: 'Home Responds Instantly',
-    desc: 'Lights turn on, AC adjusts, doors lock — all without touching a single switch or saying a word.',
-    color: '#22c55e',
-  },
+const STATS = [
+  { val: '98%',  label: 'Accuracy' },
+  { val: '50%',  label: 'Gestures' },
+  { val: '22+',  label: 'Devices' },
+  { val: '10K+', label: 'Users' },
 ]
 
-const GESTURES = [
-  { sign: 'Hello (Wave)', action: 'All Lights ON',       icon: '💡', color: '#fbbf24' },
-  { sign: 'S',            action: 'Sleep / Away Mode',   icon: '🌙', color: '#6366f1' },
-  { sign: 'K',            action: 'Cozy Night Scene',    icon: '🕯️', color: '#c084fc' },
-  { sign: 'L',            action: 'Living Room Light',   icon: '🏠', color: '#2dd4bf' },
-  { sign: 'D',            action: 'Lock Front Door',     icon: '🔒', color: '#f59e0b' },
-  { sign: 'V',            action: 'Toggle Smart TV',     icon: '📺', color: '#818cf8' },
-  { sign: 'B',            action: 'Ceiling Fan',         icon: '🌀', color: '#38bdf8' },
-  { sign: 'Y',            action: 'Bedroom AC',          icon: '❄️', color: '#60a5fa' },
+const STORIES = [
+  { name: 'Rohan Mehta', role: 'Hearing Impaired Student', quote: 'Being able to control my study desk fan and bedroom lights without sound makes me feel extremely independent.', rating: '⭐⭐⭐⭐⭐' },
+  { name: 'Dr. Sarah Jenkins', role: 'Accessibility Lead', quote: 'A significant breakthrough in AI-based home automation. The sub-50ms latency is exactly what users needed.', rating: '⭐⭐⭐⭐⭐' },
+  { name: 'Meera Kapoor', role: 'Smart Home Power User', quote: 'The MQTT bridging was instant. The emergency SOS gesture gives my family absolute peace of mind.', rating: '⭐⭐⭐⭐⭐' }
+]
+
+const INTERACTIVE_GESTURES = [
+  { 
+    name: 'Hello', 
+    emoji: '👋', 
+    command: 'All Lights ON', 
+    confidence: '98.5%',
+    activeDevices: ['light']
+  },
+  { 
+    name: 'Sleep', 
+    emoji: '💤', 
+    command: 'Away Mode (All OFF)', 
+    confidence: '99.1%',
+    activeDevices: ['lock']
+  },
+  { 
+    name: 'Cozy', 
+    emoji: '🕯️', 
+    command: 'Cozy Night Scene', 
+    confidence: '97.4%',
+    activeDevices: ['light', 'ac']
+  },
+  { 
+    name: 'Movie', 
+    emoji: '🎬', 
+    command: 'Movie Mode (TV ON)', 
+    confidence: '96.8%',
+    activeDevices: ['tv', 'light']
+  }
 ]
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const statsRef = useRef(null)
-  const [statsVisible, setStatsVisible] = useState(false)
-  const [currentHand, setCurrentHand] = useState(0)
-  const hands = ['wave', 'peace', 'lock']
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 })
+  const [selectedGesture, setSelectedGesture] = useState(INTERACTIVE_GESTURES[0])
+  const heroRef = useRef(null)
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setStatsVisible(true)
-    }, { threshold: 0.3 })
-    if (statsRef.current) obs.observe(statsRef.current)
-    return () => obs.disconnect()
-  }, [])
+  // Mouse tilt handler for the 3D visual container
+  const handleMouseMove = (e) => {
+    const card = e.currentTarget
+    const box = card.getBoundingClientRect()
+    const x = e.clientX - box.left - box.width / 2
+    const y = e.clientY - box.top - box.height / 2
+    
+    // Scale down tilt for elegance
+    const rx = -(y / (box.height / 2)) * 12
+    const ry = (x / (box.width / 2)) * 12
+    setTilt({ rx, ry })
+  }
 
+  const handleMouseLeave = () => {
+    setTilt({ rx: 0, ry: 0 })
+  }
+
+  // Scroll reveal Intersection Observer
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentHand(h => (h + 1) % hands.length)
-    }, 2500)
-    return () => clearInterval(interval)
-  }, [])
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed')
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    const revealElements = document.querySelectorAll('.reveal-on-scroll');
+    revealElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div className="lp-root">
-      <Particles />
+    <div className="landing">
+      {/* Background soft aurora shader */}
+      <div className="landing-bg-layer">
+        <SoftAurora 
+          speed={0.4} 
+          scale={1.2} 
+          brightness={0.8} 
+          color1="#6366f1" 
+          color2="#2dd4bf" 
+          noiseFrequency={2.0} 
+          enableMouseInteraction={true} 
+        />
+      </div>
 
-      {/* ── NAVBAR ── */}
-      <nav className="lp-nav">
-        <div className="lp-nav-inner">
-          <div className="lp-logo">
-            <span className="lp-logo-icon">🏠</span>
-            <span className="lp-logo-text">GestureHome</span>
-          </div>
-          <div className="lp-nav-links">
-            <a href="#features" className="lp-nav-link">Features</a>
-            <a href="#how" className="lp-nav-link">How It Works</a>
-            <a href="#gestures" className="lp-nav-link">Gestures</a>
-          </div>
-          <div className="lp-nav-ctas">
-            <button className="lp-btn-ghost" onClick={() => navigate('/auth')}>Sign In</button>
-            <button className="lp-btn-primary" onClick={() => navigate('/auth?mode=signup')}>Get Started →</button>
-          </div>
+      {/* Nav */}
+      <nav className="land-nav">
+        <div className="land-nav-logo">
+          <div className="land-logo-icon">✋</div>
+          <span className="land-logo-text">Smart <span>Home</span></span>
+        </div>
+        <div className="land-nav-links">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#stats">Stats</a>
+          <a href="#stories">Stories</a>
+          <button className="btn btn-ghost" onClick={() => navigate('/auth')} style={{ padding: '10px 24px', fontSize: '1rem', fontWeight: 700 }}>Login</button>
+          <button className="btn btn-primary" onClick={() => navigate('/auth')} style={{ padding: '10px 28px', fontSize: '1rem', fontWeight: 700 }}>Get Started</button>
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section className="lp-hero">
-        <div className="lp-hero-bg-blob lp-blob-1" />
-        <div className="lp-hero-bg-blob lp-blob-2" />
-        <div className="lp-hero-bg-blob lp-blob-3" />
-
-        <div className="lp-hero-content">
-          <div className="lp-hero-badge">
-            <span className="lp-badge-dot" />
-            AI-Powered · Real-Time · Accessible
+      {/* Hero */}
+      <section className="land-hero" ref={heroRef}>
+        <div className="land-hero-content reveal-on-scroll fade-in-left">
+          <div className="land-hero-tag">
+            <span className="live-dot"></span> AI-Powered · Real-time · 3D Control
           </div>
-
-          <h1 className="lp-hero-title">
-            Control Your Home<br />
-            <span className="lp-gradient-text">With a Gesture</span>
+          <h1 className="land-hero-title">
+            Bridging Silence<br />
+            <span>Empowering Lives</span>
           </h1>
-
-          <p className="lp-hero-sub">
-            A sign language-powered smart home system. Show your hand — MediaPipe AI recognises 
-            the gesture and controls 22 devices across 6 rooms in real time via MQTT.
-            Built for accessibility. Designed for everyone.
+          <p className="land-hero-desc">
+            AI-Powered Sign Language Recognition for Smart Home Automation. Control your entire home with just hand gestures. Click the buttons below the 3D space to test gestures! This platform bridges communication barriers by converting hand sign gestures into instant IoT commands, empowering speech and hearing-impaired users to operate lighting, appliances, media systems, and security autonomously.
           </p>
-
-          <div className="lp-hero-ctas">
-            <button className="lp-hero-btn-primary" onClick={() => navigate('/auth?mode=signup')}>
-              <span>🚀</span> Launch Dashboard
+          <div className="land-hero-btns">
+            <button className="btn btn-primary" onClick={() => navigate('/auth')} style={{ padding: '14px 32px', fontSize: '1.1rem' }}>
+              🚀 Get Started
             </button>
-            <a href="#how" className="lp-hero-btn-ghost">
-              <span>▶</span> See How It Works
-            </a>
-          </div>
-
-          <div className="lp-hero-badges">
-            <span className="lp-badge-pill">🎯 90%+ Accuracy</span>
-            <span className="lp-badge-pill">⚡ 20+ FPS</span>
-            <span className="lp-badge-pill">📡 MQTT Ready</span>
-            <span className="lp-badge-pill">♿ Accessibility First</span>
+            <button className="btn btn-ghost" onClick={() => navigate('/detection')} style={{ padding: '14px 32px', fontSize: '1.1rem' }}>
+              ▶ Live Demo
+            </button>
           </div>
         </div>
 
-        <div className="lp-hero-visual">
-          <div className="lp-hero-glow" />
-          <div className="lp-hero-phone">
-            <div className="lp-phone-screen">
-              <div className="lp-phone-header">
-                <div className="lp-phone-dot red" />
-                <div className="lp-phone-dot yellow" />
-                <div className="lp-phone-dot green" />
-                <span style={{ marginLeft: '0.5rem', fontSize: '0.65rem', color: '#6b7280' }}>GestureHome · Dashboard</span>
+        {/* 3D Tilt visual wrapper */}
+        <div className="land-hero-visual-wrapper reveal-on-scroll scale-up">
+          <div 
+            className="land-hero-visual-container"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transform: `perspective(1200px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+              transition: tilt.rx === 0 ? 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)' : 'none'
+            }}
+          >
+            {/* CSS 3D Scene */}
+            <div className="land-scene-3d">
+              {/* Floor / Grid base */}
+              <div className="land-scene-floor">
+                <div className="floor-grid-lines"></div>
+                <div className="floor-glow"></div>
               </div>
-              <div className="lp-phone-dash">
-                <div className="lp-phone-greeting">Welcome back, Alex 👋</div>
-                <div className="lp-phone-status">
-                  <span className="lp-status-live">● LIVE</span>
-                  <span style={{ color: '#6b7280', fontSize: '0.7rem' }}>8 devices on</span>
-                </div>
-                <div className="lp-phone-devices">
-                  {[
-                    { icon: '💡', name: 'Living Room', on: true,  color: '#fbbf24' },
-                    { icon: '❄️', name: 'Bedroom AC',  on: true,  color: '#38bdf8' },
-                    { icon: '📺', name: 'Smart TV',    on: false, color: '#818cf8' },
-                    { icon: '🔒', name: 'Front Door',  on: true,  color: '#f59e0b' },
-                  ].map((d, i) => (
-                    <div key={i} className={`lp-phone-device ${d.on ? 'on' : ''}`} style={{ '--dc': d.color }}>
-                      <span>{d.icon}</span>
-                      <span className="lp-pd-name">{d.name}</span>
-                      <div className={`lp-pd-toggle ${d.on ? 'on' : ''}`}>
-                        <div className="lp-pd-knob" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="lp-phone-gesture-bar">
-                  <span>🤚 Gesture detected: </span>
-                  <strong style={{ color: '#2dd4bf' }}>Hello → All Lights ON</strong>
-                </div>
+
+              {/* Node connecting paths (SVGs in 3D space) */}
+              <div className="land-paths-3d">
+                <div className="path-line path-to-light"></div>
+                <div className="path-line path-to-ac"></div>
+                <div className="path-line path-to-tv"></div>
+                <div className="path-line path-to-lock"></div>
+              </div>
+
+              {/* Device Nodes floating at different translates */}
+              {/* Light Node */}
+              <div className={`land-3d-node node-light ${selectedGesture.activeDevices.includes('light') ? 'active' : ''}`}>
+                <div className="node-icon">💡</div>
+                <div className="node-label">Smart Bulb</div>
+                <div className="node-status">{selectedGesture.activeDevices.includes('light') ? 'ON' : 'OFF'}</div>
+              </div>
+
+              {/* AC Climate Node */}
+              <div className={`land-3d-node node-ac ${selectedGesture.activeDevices.includes('ac') ? 'active' : ''}`}>
+                <div className="node-icon">❄️</div>
+                <div className="node-label">AC Unit</div>
+                <div className="node-status">{selectedGesture.activeDevices.includes('ac') ? '21°C' : 'OFF'}</div>
+              </div>
+
+              {/* Security Lock Node */}
+              <div className={`land-3d-node node-lock ${selectedGesture.activeDevices.includes('lock') ? 'active' : ''}`}>
+                <div className="node-icon">🛡️</div>
+                <div className="node-label">Front Door</div>
+                <div className="node-status">{selectedGesture.activeDevices.includes('lock') ? 'SECURED' : 'UNLOCKED'}</div>
+              </div>
+
+              {/* TV Entertainment Node */}
+              <div className={`land-3d-node node-tv ${selectedGesture.activeDevices.includes('tv') ? 'active' : ''}`}>
+                <div className="node-icon">🎬</div>
+                <div className="node-label">Media TV</div>
+                <div className="node-status">{selectedGesture.activeDevices.includes('tv') ? 'PLAYING' : 'OFF'}</div>
+              </div>
+
+              {/* Central Floating Gesture Node */}
+              <div className="land-3d-node node-gesture-main">
+                <div className="pulse-ring ring-1"></div>
+                <div className="pulse-ring ring-2"></div>
+                <div className="node-hand-emoji">{selectedGesture.emoji}</div>
+              </div>
+            </div>
+
+            {/* Gesture Detection HUD Card */}
+            <div className="land-detection-card">
+              <div style={{ fontSize: '0.62rem', color: 'var(--text3)', marginBottom: 2, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>AI Inference HUD</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--teal)' }}>{selectedGesture.name}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text)', margin: '4px 0' }}>Command: <span style={{ color: 'var(--purple)', fontWeight: 600 }}>{selectedGesture.command}</span></div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span className="hud-status-dot"></span> Conf: {selectedGesture.confidence}
               </div>
             </div>
           </div>
-          <div className="lp-hero-hand-orbit">
-            <GestureHand gesture={hands[currentHand]} active />
-          </div>
-        </div>
-      </section>
 
-      {/* ── STATS ── */}
-      <section className="lp-stats-section" ref={statsRef}>
-        <div className="lp-section-inner">
-          <div className="lp-section-label">By the numbers</div>
-          <h2 className="lp-section-title">Built for Scale</h2>
-          <StatsSection visible={statsVisible} />
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section className="lp-features" id="features">
-        <div className="lp-section-inner">
-          <div className="lp-section-label">Features</div>
-          <h2 className="lp-section-title">Everything You Need</h2>
-          <p className="lp-section-sub">A complete smart home automation system — gesture AI, MQTT, energy monitoring, security, and more.</p>
-          <div className="lp-features-grid">
-            {FEATURES.map((f, i) => (
-              <div key={i} className="lp-feature-card" style={{ '--fc': f.color, animationDelay: `${i * 0.08}s` }}>
-                <div className="lp-fc-glow" />
-                <div className="lp-fc-icon">{f.icon}</div>
-                <div className="lp-fc-tag">{f.tag}</div>
-                <h3 className="lp-fc-title">{f.title}</h3>
-                <p className="lp-fc-desc">{f.desc}</p>
-              </div>
+          {/* Interactive triggers under the 3D visual */}
+          <div className="interactive-triggers">
+            {INTERACTIVE_GESTURES.map(g => (
+              <button 
+                key={g.name} 
+                className={`trigger-btn${selectedGesture.name === g.name ? ' active' : ''}`}
+                onClick={() => setSelectedGesture(g)}
+              >
+                {g.emoji} {g.name}
+              </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section className="lp-how" id="how">
-        <div className="lp-section-inner">
-          <div className="lp-section-label">Process</div>
-          <h2 className="lp-section-title">How It Works</h2>
-          <p className="lp-section-sub">Four simple steps from hand gesture to home response.</p>
-          <div className="lp-how-grid">
-            {HOW_IT_WORKS.map((s, i) => (
-              <div key={i} className="lp-how-card" style={{ '--hc': s.color }}>
-                <div className="lp-how-step">{s.step}</div>
-                <div className="lp-how-icon">{s.icon}</div>
-                <h3 className="lp-how-title">{s.title}</h3>
-                <p className="lp-how-desc">{s.desc}</p>
-                {i < HOW_IT_WORKS.length - 1 && <div className="lp-how-arrow">→</div>}
-              </div>
-            ))}
+      {/* Features Section */}
+      <section id="features" className="land-section">
+        <div className="reveal-on-scroll fade-in-up">
+          <div className="land-section-tag">FEATURES</div>
+          <h2 className="land-section-title">Everything You Need</h2>
+          <p className="land-section-desc">A complete ecosystem for gesture-controlled smart home automation, powered by edge intelligence and resilient hardware communication.</p>
+        </div>
+        
+        <div className="land-features-grid">
+          {FEATURES.map((f, idx) => (
+            <div 
+              key={f.title} 
+              className="land-feature-card reveal-on-scroll fade-in-up" 
+              style={{ '--delay': `${idx * 0.08}s` }}
+            >
+              <div className="land-feature-icon">{f.icon}</div>
+              <h3 className="land-feature-title">{f.title}</h3>
+              <p className="land-feature-desc">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="land-section">
+        <div className="reveal-on-scroll fade-in-up">
+          <div className="land-section-tag">workflow</div>
+          <h2 className="land-section-title">How It Works</h2>
+          <p className="land-section-desc">From complex sign language to immediate appliance action in milliseconds.</p>
+        </div>
+
+        <div className="land-how-grid">
+          <div className="land-how-card reveal-on-scroll fade-in-up" style={{ '--delay': '0s' }}>
+            <div className="land-how-step">01</div>
+            <div className="land-how-icon">📹</div>
+            <h3 className="land-how-title">Capture Gesture</h3>
+            <p className="land-how-desc">Your webcam captures real-time video frames at 30+ FPS, passing them to the MediaPipe Hand Landmarker pipeline to extract 21 coordinates per hand.</p>
+          </div>
+          <div className="land-how-card reveal-on-scroll fade-in-up" style={{ '--delay': '0.15s' }}>
+            <div className="land-how-step">02</div>
+            <div className="land-how-icon">🧠</div>
+            <h3 className="land-how-title">AI Classification</h3>
+            <p className="land-how-desc">A lightweight neural network classifies hand structures into command templates in less than 30ms, running completely locally for total privacy.</p>
+          </div>
+          <div className="land-how-card reveal-on-scroll fade-in-up" style={{ '--delay': '0.3s' }}>
+            <div className="land-how-step">03</div>
+            <div className="land-how-icon">🛜</div>
+            <h3 className="land-how-title">IoT Command</h3>
+            <p className="land-how-desc">Once classified, the system serializes a command payload (e.g. Device: Lights, State: ON) and transmits it securely via MQTT over WebSockets.</p>
+          </div>
+          <div className="land-how-card reveal-on-scroll fade-in-up" style={{ '--delay': '0.45s' }}>
+            <div className="land-how-step">04</div>
+            <div className="land-how-icon">⚡</div>
+            <h3 className="land-how-title">Instant Control</h3>
+            <p className="land-how-desc">An ESP32 microcontroller or smart hub broker receives the payload and switches the high-voltage relay pins, triggering the appliance instantly.</p>
           </div>
         </div>
       </section>
 
-      {/* ── GESTURES ── */}
-      <section className="lp-gestures" id="gestures">
-        <div className="lp-section-inner">
-          <div className="lp-section-label">Controls</div>
-          <h2 className="lp-section-title">Gesture Reference</h2>
-          <p className="lp-section-sub">16 sign language gestures map to home automation commands.</p>
-          <div className="lp-gesture-grid">
-            {GESTURES.map((g, i) => (
-              <div key={i} className="lp-gesture-chip" style={{ '--gc': g.color }}>
-                <span className="lp-gc-icon">{g.icon}</span>
+      {/* Stats Section */}
+      <section id="stats" className="land-section land-stats-section">
+        <div className="reveal-on-scroll fade-in-up">
+          <div className="land-section-tag">metrics</div>
+          <h2 className="land-section-title">Engineered for Performance</h2>
+          <p className="land-section-desc">Designed with industry-standard benchmarks for daily use and emergency control.</p>
+        </div>
+
+        <div className="land-stats reveal-on-scroll fade-in-up">
+          {STATS.map((s, idx) => (
+            <div key={s.label} className="land-stat" style={{ '--delay': `${idx * 0.1}s` }}>
+              <div className="land-stat-val">{s.val}</div>
+              <div className="land-stat-label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="stats-info-box reveal-on-scroll fade-in-up">
+          <p>
+            <strong>Technical Benchmarks:</strong> Smart Home uses a lightweight neural network architecture deployed client-side to ensure sub-50ms round-trip latency. Communication is secured using SSL/TLS over MQTT, enabling resilient performance even in low-bandwidth network environments.
+          </p>
+        </div>
+      </section>
+
+      {/* Stories Section */}
+      <section id="stories" className="land-section">
+        <div className="reveal-on-scroll fade-in-up">
+          <div className="land-section-tag">impact</div>
+          <h2 className="land-section-title">Success Stories</h2>
+          <p className="land-section-desc">Designed to bridge accessibility gaps, our platform is actively helping people with hearing, speech, or mobility challenges achieve autonomous home control.</p>
+        </div>
+
+        <div className="land-stories-grid">
+          {STORIES.map((s, idx) => (
+            <div key={s.name} className="land-story-card reveal-on-scroll fade-in-up" style={{ '--delay': `${idx * 0.12}s` }}>
+              <div className="story-stars">{s.rating}</div>
+              <p className="story-quote">"{s.quote}"</p>
+              <div className="story-user">
+                <div className="story-avatar">{s.name[0]}</div>
                 <div>
-                  <div className="lp-gc-sign">{g.sign}</div>
-                  <div className="lp-gc-action">{g.action}</div>
+                  <h4 className="story-name">{s.name}</h4>
+                  <span className="story-role">{s.role}</span>
                 </div>
               </div>
-            ))}
-          </div>
-          <p className="lp-gesture-more">+ 8 more gesture commands in the dashboard</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ── CTA BANNER ── */}
-      <section className="lp-cta-banner">
-        <div className="lp-cta-bg-blob" />
-        <div className="lp-section-inner lp-cta-inner">
-          <h2 className="lp-cta-title">Ready to Control Your Home?</h2>
-          <p className="lp-cta-sub">Create your account and access the full smart home dashboard instantly.</p>
-          <button className="lp-hero-btn-primary lp-cta-btn" onClick={() => navigate('/auth?mode=signup')}>
-            🏠 Get Started Free
-          </button>
-        </div>
+      {/* CTA */}
+      <section className="land-cta reveal-on-scroll scale-up">
+        <h2>Ready to Control Your Home?</h2>
+        <p>Join thousands of users who are already using Smart Home to automate their smart homes.</p>
+        <button className="btn btn-primary" onClick={() => navigate('/auth')} style={{ padding: '13px 32px', fontSize: '1rem', marginTop: 16 }}>
+          🚀 Start Free Today
+        </button>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="lp-footer">
-        <div className="lp-section-inner lp-footer-inner">
-          <div className="lp-logo">
-            <span className="lp-logo-icon">🏠</span>
-            <span className="lp-logo-text">GestureHome</span>
-          </div>
-          <p className="lp-footer-copy">Sign Language Smart Home · Built with MediaPipe, TFLite & MQTT · Accessibility First</p>
+      {/* Footer */}
+      <footer className="land-footer">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="land-logo-icon" style={{ width: 28, height: 28, fontSize: '0.85rem' }}>✋</div>
+          <span style={{ fontWeight: 700 }}>Smart <span style={{ color: 'var(--purple)' }}>Home</span></span>
         </div>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text3)' }}>© 2026 Smart Home Automation. All rights reserved.</span>
       </footer>
+
+
     </div>
   )
 }

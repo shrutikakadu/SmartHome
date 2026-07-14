@@ -1,0 +1,58 @@
+/* Gesture History */
+.gh-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.gh-table-wrap {
+  overflow-x: auto;
+}
+.gh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.gh-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+.gh-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.gh-table-row {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.gh-table-row:last-child { border-bottom: none; }
+.gh-table-row:hover { background: var(--surface2); }
+.gh-table td { padding: 12px 16px; }
+
+.gh-gest-icon { font-size: 1.3rem; }
+.gh-sign { font-weight: 700; color: var(--purple); }
+.gh-meaning { color: var(--text); font-weight: 500; }
+.gh-device { color: var(--text2); }
+.gh-time { color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; white-space: nowrap; }
+
+.gh-conf-wrap { display: flex; flex-direction: column; gap: 3px; }
+.gh-conf-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+.gh-conf-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+  width: 80px;
+}
+.gh-conf-bar div {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s;
+}

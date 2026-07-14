@@ -1,0 +1,74 @@
+/* Analytics Page */
+.an-period-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.an-period-tab {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.an-period-tab:hover { color: var(--text); border-color: var(--border2); }
+.an-period-tab.active { background: var(--purple-dim); border-color: var(--purple); color: var(--purple); }
+
+/* Bar chart */
+.an-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+  padding-top: 10px;
+}
+.an-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+.an-chart-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.an-chart-bar {
+  width: 100%;
+  background: linear-gradient(to top, var(--purple), rgba(99,102,241,0.4));
+  border-radius: 4px 4px 0 0;
+  border: 1px solid rgba(99,102,241,0.4);
+  transition: height 0.5s ease;
+  cursor: pointer;
+}
+.an-chart-bar:hover { background: linear-gradient(to top, var(--purple2), var(--purple)); }
+.an-chart-label { font-size: 0.62rem; color: var(--text3); }
+.an-chart-val { font-size: 0.6rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+
+/* Donut */
+.an-donut-row { display: flex; align-items: center; gap: 14px; }
+.an-donut {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(99,102,241,0.15);
+}
+.an-donut-inner {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--bg2);
+}
+.an-donut-legend { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.an-legend-row { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; }
+.an-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.an-legend-label { flex: 1; color: var(--text2); }
+.an-legend-pct { font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }

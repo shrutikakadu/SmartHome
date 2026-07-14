@@ -16,14 +16,14 @@
   → Grant camera permission for gesture recognition
 
 ═══════════════════════════════════════════════════
-  2. BACKEND (FastAPI) — Port 8000
+  2. BACKEND (FastAPI) — Port 8001
 ═══════════════════════════════════════════════════
 
   cd backend
   pip install -r requirements.txt
-  uvicorn main:app --reload --port 8000
+  uvicorn main:app --reload --port 8001
 
-  → API docs at: http://localhost:8000/docs
+  → API docs at: http://localhost:8001/docs
   → Receives gesture commands from frontend
   → Bridges to MQTT for device control
 
@@ -59,3 +59,54 @@
 
   VisiGesture (Sign Language for Non-Speaking People):
   → C:\Users\USER\Downloads\AI-Sign-Language-System\
+_______________________________________________________
+Smart Home App — How to Run
+============================
+
+1. START MONGODB (Database)
+---------------------------
+Open a terminal and run:
+
+   "C:\Program Files\MongoDB\Server\8.3\bin\mongod.exe" --dbpath C:\data\db --port 27017
+
+This starts the database on port 27017. Keep this terminal open.
+
+
+2. START BACKEND (API Server)
+------------------------------
+Open a NEW terminal and run:
+
+   cd C:\Users\himan\Desktop\Projects\SmartHome\backend
+   pip install -r requirements.txt
+   python -m uvicorn main:app --reload --port 8001
+
+Backend runs at: http://localhost:8001
+API docs at:     http://localhost:8001/docs
+
+
+3. START FRONTEND (Web Dashboard)
+----------------------------------
+Open a NEW terminal and run:
+
+   cd C:\Users\himan\Desktop\Projects\SmartHome\frontend
+   npm install
+   npm run dev
+
+Frontend runs at: http://localhost:5174
+
+
+4. LOGIN
+---------
+Email:    admin@home.com
+Password: admin123
+
+
+STOPPING
+--------
+To stop MongoDB:  Close its terminal window, or run:
+   taskkill /F /IM mongod.exe
+
+To stop backend:  Close its terminal window, or run:
+   taskkill /F /IM python.exe
+
+To stop frontend: Close its terminal window, or press Ctrl+C in it.

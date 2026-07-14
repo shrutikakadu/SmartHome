@@ -112,6 +112,7 @@ Sign-Language-SmartHome/
 | Frontend | React 19, Vite, CSS3 |
 | Gesture Recognition | MediaPipe Hands, Custom ASL Classifier |
 | Backend API | FastAPI (Python) |
+| Database | MongoDB (motor async driver) |
 | IoT Protocol | MQTT (Mosquitto Broker) |
 | Hardware | ESP32, Relay Module |
 | Real-time | WebSocket / MQTT |
@@ -120,19 +121,41 @@ Sign-Language-SmartHome/
 
 ## 🚀 Getting Started
 
-### Frontend Dashboard
+### Prerequisites
+- **Node.js** (v18+)
+- **Python 3.13+**
+- **MongoDB** (local or Atlas)
+
+### 1. Start MongoDB
+
+**Option A — Local MongoDB** (already installed at `C:\Program Files\MongoDB\Server\8.3\bin\`)
+```bash
+# Start MongoDB server (creates C:\data\db automatically)
+"C:\Program Files\MongoDB\Server\8.3\bin\mongod.exe" --dbpath C:\data\db --port 27017
+```
+
+**Option B — MongoDB Atlas** (cloud, no install needed)
+1. Create free account at [mongodb.com/atlas](https://www.mongodb.com/atlas)
+2. Create a cluster → get connection string
+3. Set env variable before starting backend:
+```bash
+$env:MONGO_URI="mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority"
+```
+
+### 2. Backend (FastAPI + MongoDB)
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8000
+# API docs at http://localhost:8000/docs
+```
+
+### 3. Frontend Dashboard
 ```bash
 cd frontend
 npm install
 npm run dev
 # Opens at http://localhost:5174
-```
-
-### Backend (FastAPI)
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
 ```
 
 ### Hardware Setup

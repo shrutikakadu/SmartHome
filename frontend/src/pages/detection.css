@@ -1,0 +1,160 @@
+/* Detection Page */
+.det-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+@media (max-width: 900px) { .det-layout { grid-template-columns: 1fr; } }
+
+.det-cam-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.det-cam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.det-cam-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--red);
+  background: rgba(239,68,68,0.1);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(239,68,68,0.3);
+  letter-spacing: 0.5px;
+}
+.det-fps { font-size: 0.7rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+.det-cam-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.det-hand-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(34,197,94,0.12);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34,197,94,0.3);
+  animation: fadeUp 0.2s ease;
+}
+
+.det-video-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: rgba(0,0,0,0.7);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.det-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+.det-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+.det-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--purple), transparent);
+  animation: scanMove 2s linear infinite;
+  pointer-events: none;
+}
+@keyframes scanMove {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+.det-result-pill {
+  position: absolute;
+  bottom: 12px; right: 12px;
+  background: rgba(5,9,20,0.95);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 8px 14px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  animation: fadeUp 0.2s ease;
+}
+.det-result-char { font-size: 1.8rem; font-weight: 900; color: var(--purple); line-height: 1; }
+.det-result-label { font-size: 0.6rem; color: var(--text3); margin-top: 2px; }
+
+.det-idle {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px;
+}
+.det-idle span { font-size: 3rem; opacity: 0.15; }
+.det-idle p { font-size: 0.82rem; color: var(--text2); margin: 0; }
+.det-idle-hint { font-size: 0.68rem !important; opacity: 0.5; }
+.det-cam-btn { width: 100%; justify-content: center; }
+
+/* Panel */
+.det-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.det-gesture-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+.det-gesture-char {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+.det-confidence-val {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Recent gestures */
+.det-recent-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.det-recent-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  min-width: 75px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.det-recent-item:hover { border-color: var(--border2); transform: translateY(-2px); }
+.det-recent-icon { font-size: 1.8rem; }
+.det-recent-label { font-size: 0.68rem; color: var(--text2); font-weight: 600; text-align: center; }

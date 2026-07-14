@@ -1,0 +1,325 @@
+/* ══════════════════════════════════════════════
+   3D HOME — True CSS 3D House with Extruded Walls
+   ══════════════════════════════════════════════ */
+
+.h3d-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+/* ── Scene ── */
+.h3d-scene {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 360px;
+  max-height: 520px;
+  perspective: 1400px;
+  perspective-origin: 50% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.h3d-scene.dragging { cursor: grabbing; }
+
+/* ── House wrapper ── */
+.h3d-house {
+  width: 88%;
+  height: 85%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.08s linear;
+}
+.h3d-scene:not(.dragging) .h3d-house {
+  transition: transform 0.2s ease-out;
+}
+
+/* ── Foundation slab ── */
+.h3d-base {
+  position: absolute;
+  inset: -8px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(45,212,191,0.04));
+  border: 2px solid rgba(255,255,255,0.07);
+  border-radius: 4px;
+  transform: translateZ(-2px);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(99,102,241,0.06);
+}
+
+/* ══════════════════════════════════════════════
+   ROOM — 3D Box with Floor + 4 Walls
+   ══════════════════════════════════════════════ */
+.h3d-room {
+  position: absolute;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+.h3d-room:hover { transform: translateZ(4px); }
+.h3d-room.selected { transform: translateZ(10px); }
+
+/* ── Floor face ── */
+.h3d-floor-face {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--rc) 6%, rgba(13,14,32,0.95));
+  border: 1px solid color-mix(in srgb, var(--rc) 20%, rgba(255,255,255,0.06));
+  transform: translateZ(0px);
+  transition: background 0.3s;
+  overflow: hidden;
+}
+.h3d-room.active .h3d-floor-face {
+  background: color-mix(in srgb, var(--rc) 12%, rgba(13,14,32,0.9));
+  border-color: color-mix(in srgb, var(--rc) 35%, transparent);
+}
+.h3d-room.selected .h3d-floor-face {
+  border-color: var(--rc);
+  box-shadow: inset 0 0 30px color-mix(in srgb, var(--rc) 15%, transparent);
+}
+
+/* Floor glow for active rooms */
+.h3d-floor-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rc) 18%, transparent), transparent 70%);
+  animation: h3dGlow 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes h3dGlow { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+/* ── Walls — all share the same height ── */
+.h3d-face {
+  position: absolute;
+  backface-visibility: hidden;
+}
+
+/* Back wall */
+.h3d-wall-back {
+  left: 0; top: 0; width: 100%; height: 50px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 10%, rgba(20,21,40,0.95)), color-mix(in srgb, var(--rc) 4%, rgba(13,14,32,0.98)));
+  border-bottom: 1px solid color-mix(in srgb, var(--rc) 20%, rgba(255,255,255,0.05));
+  transform-origin: top center;
+  transform: rotateX(-90deg) translateZ(0px);
+}
+
+/* Left wall */
+.h3d-wall-left {
+  left: 0; top: 0; width: 50px; height: 100%;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 12%, rgba(16,17,35,0.97)), color-mix(in srgb, var(--rc) 5%, rgba(13,14,32,0.98)));
+  border-right: 1px solid color-mix(in srgb, var(--rc) 18%, rgba(255,255,255,0.04));
+  transform-origin: left center;
+  transform: rotateY(90deg) translateZ(0px);
+}
+
+/* Right wall */
+.h3d-wall-right {
+  right: 0; top: 0; width: 50px; height: 100%;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--rc) 8%, rgba(16,17,35,0.97)), color-mix(in srgb, var(--rc) 3%, rgba(13,14,32,0.98)));
+  border-left: 1px solid color-mix(in srgb, var(--rc) 15%, rgba(255,255,255,0.03));
+  transform-origin: right center;
+  transform: rotateY(-90deg) translateZ(0px);
+}
+
+/* Front wall */
+.h3d-wall-front {
+  left: 0; bottom: 0; width: 100%; height: 50px;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--rc) 14%, rgba(20,21,40,0.95)), color-mix(in srgb, var(--rc) 6%, rgba(13,14,32,0.98)));
+  border-top: 1px solid color-mix(in srgb, var(--rc) 22%, rgba(255,255,255,0.06));
+  transform-origin: bottom center;
+  transform: rotateX(90deg) translateZ(0px);
+}
+
+/* ══════════════════════════════════════════════
+   ROOM LABEL
+   ══════════════════════════════════════════════ */
+.h3d-room-label {
+  position: absolute;
+  top: 6px; left: 50%;
+  transform: translateX(-50%) translateZ(52px);
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+}
+.h3d-room.active .h3d-room-label { color: var(--rc); }
+
+/* ══════════════════════════════════════════════
+   FURNITURE — 3D blocks sitting on floor
+   ══════════════════════════════════════════════ */
+.h3d-furn {
+  position: absolute;
+  border-radius: 3px;
+  transform: translateZ(2px);
+  pointer-events: none;
+}
+
+.h3d-furn-sofa {
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.h3d-furn-table {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.h3d-furn-tv {
+  background: rgba(80,80,120,0.2);
+  border: 1px solid rgba(129,140,248,0.3);
+  box-shadow: 0 0 8px rgba(129,140,248,0.1);
+}
+.h3d-furn-bed {
+  background: rgba(56,189,248,0.12);
+  border: 1px solid rgba(56,189,248,0.25);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.h3d-furn-wardrobe {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.h3d-furn-counter {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.h3d-furn-desk {
+  background: rgba(45,212,191,0.1);
+  border: 1px solid rgba(45,212,191,0.2);
+}
+.h3d-furn-chair {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+}
+.h3d-furn-tub {
+  background: rgba(236,72,153,0.1);
+  border: 1px solid rgba(236,72,153,0.2);
+  border-radius: 20px;
+}
+.h3d-furn-sink {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════
+   DEVICE ICONS
+   ══════════════════════════════════════════════ */
+.h3d-devices {
+  position: absolute;
+  bottom: 8px; left: 6px; right: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  transform: translateZ(54px);
+  z-index: 10;
+}
+
+.h3d-dev {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  font-size: 0.7rem;
+  backdrop-filter: blur(4px);
+}
+.h3d-dev:hover {
+  transform: scale(1.15);
+  border-color: rgba(255,255,255,0.25);
+}
+.h3d-dev.on {
+  background: color-mix(in srgb, var(--rc) 25%, rgba(0,0,0,0.4));
+  border-color: color-mix(in srgb, var(--rc) 45%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--rc) 30%, transparent);
+}
+.h3d-dev.on span { filter: none; }
+.h3d-dev span { filter: grayscale(0.4) brightness(0.9); }
+
+.h3d-dev-dot {
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  border: 1.5px solid rgba(0,0,0,0.6);
+  transition: all 0.2s;
+}
+.h3d-dev-dot.on {
+  background: #22c55e;
+  box-shadow: 0 0 5px rgba(34,197,94,0.6);
+  animation: h3dPulse 1.5s ease infinite;
+}
+@keyframes h3dPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ══════════════════════════════════════════════
+   CONTROLS
+   ══════════════════════════════════════════════ */
+.h3d-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px 10px;
+}
+.h3d-ctrl-btn {
+  min-width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  padding: 0 8px;
+}
+.h3d-ctrl-btn:hover { border-color: var(--border2); color: var(--text); background: var(--purple-dim); }
+.h3d-ctrl-btn:active { transform: scale(0.93); }
+.h3d-ctrl-btn.reset { font-size: 0.72rem; font-weight: 600; }
+.h3d-ctrl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.h3d-ctrl-zoom {
+  font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;
+  font-weight: 600; color: var(--text3); min-width: 36px; text-align: center;
+}
+
+/* ── Legend ── */
+.h3d-legend {
+  display: flex; gap: 16px; justify-content: center;
+}
+.h3d-leg-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.68rem; color: var(--text3);
+}
+.h3d-leg-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); border: 1.5px solid var(--bg2);
+}
+.h3d-leg-dot.on {
+  background: #22c55e; box-shadow: 0 0 4px rgba(34,197,94,0.5);
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .h3d-scene { min-height: 260px; aspect-ratio: 4/3; }
+  .h3d-house { width: 95%; height: 90%; }
+  .h3d-dev { width: 22px; height: 22px; font-size: 0.6rem; }
+  .h3d-room-label { font-size: 0.48rem; }
+}
