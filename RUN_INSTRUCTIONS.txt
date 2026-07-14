@@ -1,0 +1,61 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║      Sign Language Smart Home — Run Instructions                     ║
+║      Gesture-Controlled Smart Home Automation System                 ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════
+  1. FRONTEND (React Dashboard) — Port 5174
+═══════════════════════════════════════════════════
+
+  cd frontend
+  npm install
+  npm run dev
+
+  → Opens at: http://localhost:5174
+  → Shows Smart Home dashboard with 22 devices
+  → Grant camera permission for gesture recognition
+
+═══════════════════════════════════════════════════
+  2. BACKEND (FastAPI) — Port 8000
+═══════════════════════════════════════════════════
+
+  cd backend
+  pip install -r requirements.txt
+  uvicorn main:app --reload --port 8000
+
+  → API docs at: http://localhost:8000/docs
+  → Receives gesture commands from frontend
+  → Bridges to MQTT for device control
+
+═══════════════════════════════════════════════════
+  3. HARDWARE (ESP32 + MQTT)
+═══════════════════════════════════════════════════
+
+  • Install Mosquitto MQTT broker
+  • Flash ESP32 with firmware from hardware/ESP32/
+  • Wire relay module per hardware/Relay-Module/
+  • Configure MQTT connection in hardware/MQTT/
+
+═══════════════════════════════════════════════════
+  GESTURE CONTROLS (Quick Reference)
+═══════════════════════════════════════════════════
+
+  Hello (wave)  → All Lights ON
+  S             → Sleep / Away mode (all off)
+  K             → Cozy Night scene
+  F             → Good Morning scene
+  W             → Movie Mode
+  L             → Living Room Light toggle
+  B             → Ceiling Fan toggle
+  V             → Smart TV toggle
+  Y             → Bedroom AC toggle
+  I             → Bedroom Light toggle
+  D             → Front Door Lock
+  U             → All Curtains toggle
+
+═══════════════════════════════════════════════════
+  SISTER PROJECT
+═══════════════════════════════════════════════════
+
+  VisiGesture (Sign Language for Non-Speaking People):
+  → C:\Users\USER\Downloads\AI-Sign-Language-System\
