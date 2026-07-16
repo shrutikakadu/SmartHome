@@ -104,11 +104,12 @@ export default function LandingPage() {
       <div className="landing-bg-layer">
         <SoftAurora 
           speed={0.4} 
-          scale={1.2} 
-          brightness={0.8} 
+          scale={2.2} 
+          brightness={1.0} 
           color1="#6366f1" 
           color2="#2dd4bf" 
-          noiseFrequency={2.0} 
+          noiseFrequency={1.4} 
+          bandSpread={1.4} 
           enableMouseInteraction={true} 
         />
       </div>
@@ -137,7 +138,7 @@ export default function LandingPage() {
           </div>
           <h1 className="land-hero-title">
             Bridging Silence<br />
-            <span>Empowering Lives</span>
+            <span>Empowering Live</span>
           </h1>
           <p className="land-hero-desc">
             AI-Powered Sign Language Recognition for Smart Home Automation. Control your entire home with just hand gestures. Click the buttons below the 3D space to test gestures! This platform bridges communication barriers by converting hand sign gestures into instant IoT commands, empowering speech and hearing-impaired users to operate lighting, appliances, media systems, and security autonomously.
@@ -357,6 +358,36 @@ export default function LandingPage() {
         <button className="btn btn-primary" onClick={() => navigate('/auth')} style={{ padding: '13px 32px', fontSize: '1rem', marginTop: 16 }}>
           🚀 Start Free Today
         </button>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="land-section land-contact">
+        <div className="reveal-on-scroll fade-in-up">
+          <div className="land-section-tag">contact</div>
+          <h2 className="land-section-title">Get In Touch</h2>
+          <p className="land-section-desc">Have questions, feedback, or need support? Reach out to us and we'll get back to you as soon as possible.</p>
+        </div>
+
+        <div className="land-contact-grid reveal-on-scroll fade-in-up">
+          <div className="land-contact-card">
+            <div className="land-contact-icon">📧</div>
+            <h3 className="land-contact-label">Email Us</h3>
+            <p className="land-contact-info">For general inquiries and support</p>
+            <a href="mailto:support@smarthome.ai" className="land-contact-link">support@smarthome.ai</a>
+          </div>
+          <div className="land-contact-card">
+            <div className="land-contact-icon">🏢</div>
+            <h3 className="land-contact-label">Head Office</h3>
+            <p className="land-contact-info">Visit us at our headquarters</p>
+            <a href="mailto:hello@smarthome.ai" className="land-contact-link">hello@smarthome.ai</a>
+          </div>
+          <div className="land-contact-card">
+            <div className="land-contact-icon">🛠️</div>
+            <h3 className="land-contact-label">Technical Support</h3>
+            <p className="land-contact-info">Device setup and troubleshooting</p>
+            <a href="mailto:tech@smarthome.ai" className="land-contact-link">tech@smarthome.ai</a>
+          </div>
+        </div>
       </section>
 
       {/* Footer */}

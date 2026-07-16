@@ -93,3 +93,163 @@
   border-radius: 999px;
   transition: width 0.5s ease;
 }
+
+/* ══════════════════════════════════════════════
+   ENERGY CHART
+════════════════════════════════════════════ */
+.energy-card { overflow: visible; }
+.energy-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.energy-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.energy-total-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.energy-total-unit {
+  font-size: 0.68rem;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* Area chart container */
+.energy-chart-area {
+  margin: 0 -8px 18px;
+}
+
+/* Breakdown */
+.energy-breakdown-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.energy-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.energy-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  cursor: default;
+}
+.energy-bar-row:hover,
+.energy-bar-row.active {
+  background: var(--surface2);
+}
+.energy-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 90px;
+  flex-shrink: 0;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.energy-bar-icon { font-size: 0.9rem; }
+.energy-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.energy-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+.energy-bar-val {
+  width: 64px;
+  text-align: right;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text2);
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+
+/* Tooltip */
+.energy-tooltip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  font-size: 0.73rem;
+  min-width: 140px;
+}
+.energy-tooltip-day {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.energy-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  color: var(--text2);
+}
+.energy-tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.energy-tooltip-val {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ══════════════════════════════════════════════
+   DASHBOARD — Mobile Responsive
+════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .db-welcome h1 { font-size: 1.15rem; }
+  .db-qa-btn { padding: 8px 13px; font-size: 0.75rem; }
+}
+
+@media (max-width: 600px) {
+  .db-welcome { margin-bottom: 14px; }
+  .db-welcome h1 { font-size: 1rem; }
+  .db-welcome p { font-size: 0.73rem; }
+
+  .db-quick-actions { gap: 8px; }
+  .db-qa-btn {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+
+  .db-activity-row { padding: 8px 4px; gap: 8px; }
+  .db-activity-icon { font-size: 1rem; width: 24px; }
+  .db-activity-action { font-size: 0.75rem; }
+  .db-activity-room { font-size: 0.65rem; }
+  .db-activity-time { font-size: 0.65rem; }
+
+  .db-ai-row { padding: 6px 0; font-size: 0.73rem; }
+}

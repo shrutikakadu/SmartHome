@@ -1,4 +1,21 @@
-/* Voice & Speech */
+/* ============================================================
+   VOICE & SPEECH PAGE — Premium Audio UI
+============================================================ */
+
+/* Two-column layout */
+.vs-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) { .vs-layout { grid-template-columns: 1fr; } }
+
+/* Section cards */
+.vs-card-full {
+  grid-column: 1 / -1;
+}
+
+/* TTS Input Row */
 .vs-input-row {
   display: flex;
   gap: 12px;
@@ -8,77 +25,214 @@
   flex: 1;
   background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 12px 14px;
   color: var(--text);
-  font-family: inherit;
   font-size: 0.82rem;
+  font-family: inherit;
   resize: vertical;
-  outline: none;
   min-height: 80px;
-  transition: border-color 0.15s;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  line-height: 1.5;
 }
-.vs-textarea:focus { border-color: var(--border2); }
+.vs-textarea:focus {
+  border-color: rgba(99,102,241,0.5);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.vs-textarea::placeholder { color: var(--text3); }
 
-/* Waveform */
+/* Speak button glow when speaking */
+.vs-speak-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 110px;
+}
+.vs-speak-btn {
+  position: relative;
+  overflow: hidden;
+}
+.vs-speak-btn.speaking {
+  animation: speakingGlow 1.5s ease-in-out infinite;
+}
+@keyframes speakingGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(99,102,241,0.3); }
+  50% { box-shadow: 0 0 24px rgba(99,102,241,0.7), 0 0 40px rgba(45,212,191,0.3); }
+}
+
+/* Sound wave bars (STT) */
+.vs-stt-display {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .vs-waveform {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-  height: 48px;
-  padding: 4px;
-  background: var(--surface2);
+  height: 60px;
+  background: rgba(0,0,0,0.2);
   border-radius: 12px;
   border: 1px solid var(--border);
+  padding: 0 16px;
+  overflow: hidden;
 }
 .vs-wave-bar {
-  flex: 1;
-  background: rgba(99,102,241,0.3);
-  border-radius: 4px;
-  height: 30%;
-  transition: height 0.1s;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6366f1, #2dd4bf);
+  height: 6px;
+  opacity: 0.3;
+  transition: height 0.1s ease, opacity 0.1s;
+  transform-origin: center;
 }
 .vs-waveform.active .vs-wave-bar {
-  animation: wave 0.8s ease-in-out infinite alternate;
+  opacity: 0.9;
+  animation: waveAnim var(--wave-dur, 0.6s) ease-in-out infinite alternate;
   animation-delay: var(--delay, 0s);
-  background: var(--purple);
 }
-@keyframes wave {
-  0% { height: 10%; }
-  100% { height: 90%; }
+@keyframes waveAnim {
+  from { height: 4px; }
+  to   { height: var(--wave-h, 40px); }
 }
 
-.vs-stt-display { display: flex; flex-direction: column; gap: 0; }
+.vs-record-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.vs-record-btn {
+  min-width: 140px;
+  justify-content: center;
+  transition: all 0.25s !important;
+}
+.vs-record-btn.recording {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 0 0 0 rgba(239,68,68,0.4);
+  animation: recordPulse 1.5s ease-in-out infinite !important;
+}
+@keyframes recordPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+}
+.vs-stt-result {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--text);
+  padding: 8px 12px;
+  background: rgba(99,102,241,0.07);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 10px;
+  animation: fadeUp 0.3s ease;
+}
 
+/* Sign Input Row */
 .vs-sign-row {
   display: flex;
   gap: 10px;
+  align-items: center;
   margin-bottom: 14px;
-  flex-wrap: wrap;
+}
+.vs-sign-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.vs-sign-input:focus {
+  border-color: rgba(99,102,241,0.5);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
 
+/* Sign Display */
 .vs-sign-display {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 16px;
-  background: var(--surface2);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-.vs-avatar {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(45,212,191,0.04));
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 16px;
+  animation: fadeUp 0.3s ease;
+}
+
+/* Avatar */
+.vs-avatar {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(45,212,191,0.15));
+  border: 2px solid rgba(99,102,241,0.3);
+  display: flex; align-items: center; justify-content: center;
   font-size: 3rem;
   position: relative;
+  animation: avatarFloat 3s ease-in-out infinite;
+}
+@keyframes avatarFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 .vs-avatar-hand {
-  font-size: 1.8rem;
-  animation: handWave 1s ease-in-out infinite alternate;
+  position: absolute;
+  bottom: -8px; right: -8px;
+  font-size: 1.5rem;
+  background: var(--bg2);
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgba(99,102,241,0.3);
+  animation: handWave 2s ease-in-out infinite;
 }
 @keyframes handWave {
-  0% { transform: rotate(-15deg); }
-  100% { transform: rotate(15deg); }
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(20deg); }
 }
+.vs-sign-phrase {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+.vs-sign-lang {
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-align: center;
+}
+
+/* Alphabet Reference Grid */
+.vs-alphabet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.vs-alpha-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.vs-alpha-item:hover {
+  border-color: rgba(99,102,241,0.4);
+  background: rgba(99,102,241,0.08);
+  transform: translateY(-2px);
+}
+.vs-alpha-emoji { font-size: 1.3rem; }
+.vs-alpha-label { font-size: 0.6rem; font-weight: 700; color: var(--text3); }

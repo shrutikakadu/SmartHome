@@ -5,7 +5,7 @@
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.6;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 70%);
+  opacity: 0.85;
+  mask-image: radial-gradient(ellipse 120% 90% at 50% 45%, black 40%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 120% 90% at 50% 45%, black 40%, transparent 85%);
 }

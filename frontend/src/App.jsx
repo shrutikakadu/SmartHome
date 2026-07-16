@@ -5,6 +5,7 @@ import './App.css'
 import LandingPage            from './pages/LandingPage'
 import AuthPage               from './pages/AuthPage'
 import DashboardPage          from './pages/DashboardPage'
+import PremiumDashboard       from './pages/PremiumDashboard'
 import SmartHomePage          from './pages/SmartHomePage'
 import DetectionPage          from './pages/DetectionPage'
 import GestureHistoryPage     from './pages/GestureHistoryPage'
@@ -13,7 +14,6 @@ import AIChatPage             from './pages/AIChatPage'
 import VoiceSpeechPage        from './pages/VoiceSpeechPage'
 import EmergencyPage          from './pages/EmergencyPage'
 import DeviceManagementPage   from './pages/DeviceManagementPage'
-import AdminPage              from './pages/AdminPage'
 import AITrainingPage         from './pages/AITrainingPage'
 
 function ProtectedRoute({ children }) {
@@ -44,7 +44,6 @@ export default function App() {
         <Route path="/voice-speech"   element={<Protected><VoiceSpeechPage /></Protected>} />
         <Route path="/emergency"      element={<Protected><EmergencyPage /></Protected>} />
         <Route path="/devices"        element={<Protected><DeviceManagementPage /></Protected>} />
-        <Route path="/admin"          element={<Protected><AdminPage /></Protected>} />
         <Route path="/ai-training"    element={<Protected><AITrainingPage /></Protected>} />
 
         {/* Catch-all */}

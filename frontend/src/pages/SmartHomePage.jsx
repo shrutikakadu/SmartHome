@@ -7,18 +7,18 @@ import './smarthomeControl.css'
 const ROOMS = ['All', 'Living Room', 'Bedroom', 'Study', 'Kitchen']
 
 const DEVICES = [
-  { id: 'livingLight',   name: 'Living Room Light', room: 'Living Room',    icon: '💡', cat: 'light',   color: '#f59e0b' },
-  { id: 'livingFan',    name: 'Bedroom Fan',        room: 'Living Room',    icon: '🌀', cat: 'fan',     color: '#2dd4bf' },
-  { id: 'tv',           name: 'TV',                 room: 'Living Room',    icon: '📺', cat: 'tv',      color: '#818cf8' },
-  { id: 'ac',           name: 'Air Conditioner',    room: 'Bedroom',        icon: '❄️', cat: 'ac',      color: '#38bdf8', temp: 24 },
-  { id: 'smartLock',    name: 'Smart Lock',         room: 'Main Door',      icon: '🔒', cat: 'lock',    color: '#f59e0b', locked: true },
-  { id: 'curtains',     name: 'Curtains',           room: 'Living Room',    icon: '🪟', cat: 'curtain', color: '#c084fc' },
-  { id: 'waterHeater',  name: 'Water Heater',       room: 'Bathroom',       icon: '🚿', cat: 'heat',    color: '#fb923c' },
-  { id: 'airPurifier',  name: 'Air Purifier',       room: 'Bedroom',        icon: '💨', cat: 'air',     color: '#22c55e' },
-  { id: 'studyLight',   name: 'Study Light',        room: 'Study',          icon: '💡', cat: 'light',   color: '#f59e0b' },
-  { id: 'kitchenLight', name: 'Kitchen Light',      room: 'Kitchen',        icon: '💡', cat: 'light',   color: '#f59e0b' },
-  { id: 'kitchenExhaust','name': 'Exhaust Fan',     room: 'Kitchen',        icon: '💨', cat: 'fan',     color: '#2dd4bf' },
-  { id: 'bedLight',     name: 'Bedroom Light',      room: 'Bedroom',        icon: '💡', cat: 'light',   color: '#f59e0b' },
+  { id: 'livingLight',    name: 'Living Room Light', room: 'Living Room', icon: '💡', cat: 'light',   color: '#f59e0b', watts: '9W'  },
+  { id: 'livingFan',     name: 'Bedroom Fan',        room: 'Living Room', icon: '🌀', cat: 'fan',     color: '#2dd4bf', watts: '65W' },
+  { id: 'tv',            name: 'Smart TV',           room: 'Living Room', icon: '📺', cat: 'tv',      color: '#818cf8', watts: '120W'},
+  { id: 'ac',            name: 'Air Conditioner',    room: 'Bedroom',     icon: '❄️', cat: 'ac',      color: '#38bdf8', watts: '900W', temp: 24 },
+  { id: 'smartLock',     name: 'Smart Lock',         room: 'Main Door',   icon: '🔒', cat: 'lock',    color: '#f59e0b', watts: '3W',  locked: true },
+  { id: 'curtains',      name: 'Curtains',           room: 'Living Room', icon: '🪟', cat: 'curtain', color: '#c084fc', watts: '20W' },
+  { id: 'waterHeater',   name: 'Water Heater',       room: 'Bathroom',    icon: '🚿', cat: 'heat',    color: '#fb923c', watts: '2000W'},
+  { id: 'airPurifier',   name: 'Air Purifier',       room: 'Bedroom',     icon: '💨', cat: 'air',     color: '#22c55e', watts: '35W' },
+  { id: 'studyLight',    name: 'Study Light',        room: 'Study',       icon: '💡', cat: 'light',   color: '#f59e0b', watts: '9W'  },
+  { id: 'kitchenLight',  name: 'Kitchen Light',      room: 'Kitchen',     icon: '💡', cat: 'light',   color: '#f59e0b', watts: '9W'  },
+  { id: 'kitchenExhaust',name: 'Exhaust Fan',        room: 'Kitchen',     icon: '💨', cat: 'fan',     color: '#2dd4bf', watts: '30W' },
+  { id: 'bedLight',      name: 'Bedroom Light',      room: 'Bedroom',     icon: '💡', cat: 'light',   color: '#f59e0b', watts: '9W'  },
 ]
 
 const defaultState = Object.fromEntries(
@@ -66,10 +66,10 @@ export default function SmartHomePage() {
     }
   }
 
-  const visibleDevices = activeRoom === 'All'
-    ? DEVICES
-    : DEVICES.filter(d => d.room === activeRoom)
+  const allOn  = () => setDevices(prev => Object.fromEntries(Object.keys(prev).map(k => [k, { ...prev[k], on: true  }])))
+  const allOff = () => setDevices(prev => Object.fromEntries(Object.keys(prev).map(k => [k, { ...prev[k], on: false }])))
 
+  const visibleDevices = activeRoom === 'All' ? DEVICES : DEVICES.filter(d => d.room === activeRoom)
   const onCount = Object.values(devices).filter(d => d.on).length
 
   return (
@@ -78,23 +78,43 @@ export default function SmartHomePage() {
         {/* Header */}
         <div className="sh-ctrl-header">
           <div>
-            <h1 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 4 }}>🏡 Smart Home</h1>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>Manage your devices</p>
+            <h1 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 4 }}>🏡 Smart Home</h1>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>Control your devices room by room</p>
           </div>
-          <div className="sh-ctrl-stats">
-            <div className="sh-ctrl-stat">
-              <span className="sh-ctrl-stat-val" style={{ color: 'var(--green)' }}>{onCount}</span>
-              <span className="sh-ctrl-stat-lbl">ON</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {/* Stats */}
+            <div className="sh-ctrl-stats">
+              <div className="sh-ctrl-stat">
+                <span className="sh-ctrl-stat-val" style={{ color: '#22c55e' }}>{onCount}</span>
+                <span className="sh-ctrl-stat-lbl">ON</span>
+              </div>
+              <div className="sh-ctrl-stat-divider"></div>
+              <div className="sh-ctrl-stat">
+                <span className="sh-ctrl-stat-val">{DEVICES.length - onCount}</span>
+                <span className="sh-ctrl-stat-lbl">OFF</span>
+              </div>
+              <div className="sh-ctrl-stat-divider"></div>
+              <div className="sh-ctrl-stat">
+                <span className="sh-ctrl-stat-val">{DEVICES.length}</span>
+                <span className="sh-ctrl-stat-lbl">TOTAL</span>
+              </div>
             </div>
-            <div className="sh-ctrl-stat-divider"></div>
-            <div className="sh-ctrl-stat">
-              <span className="sh-ctrl-stat-val">{DEVICES.length - onCount}</span>
-              <span className="sh-ctrl-stat-lbl">OFF</span>
-            </div>
-            <div className="sh-ctrl-stat-divider"></div>
-            <div className="sh-ctrl-stat">
-              <span className="sh-ctrl-stat-val">{DEVICES.length}</span>
-              <span className="sh-ctrl-stat-lbl">TOTAL</span>
+            {/* Quick toggle */}
+            <div className="sh-ctrl-actions">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={allOn}
+                style={{ fontSize: '0.75rem', gap: 5 }}
+              >
+                ⚡ All ON
+              </button>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={allOff}
+                style={{ fontSize: '0.75rem', gap: 5 }}
+              >
+                🌙 All OFF
+              </button>
             </div>
           </div>
         </div>
@@ -111,11 +131,11 @@ export default function SmartHomePage() {
         </div>
 
         {/* 3D Home Layout */}
-        <div className="card" style={{ marginBottom: 20 }}>
+        <div className="card" style={{ marginBottom: 22 }}>
           <div className="card-header">
             <div>
               <div className="card-title">🏠 3D Home Layout</div>
-              <div className="card-subtitle">Click rooms to filter devices. Click device icons to toggle.</div>
+              <div className="card-subtitle">Click rooms to filter · Click device icons to toggle</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: '0.72rem', color: 'var(--text3)', fontWeight: 600 }}>
@@ -123,8 +143,8 @@ export default function SmartHomePage() {
               </span>
               <div
                 className={`toggle${show3D ? ' on' : ''}`}
+                style={{ '--acc': '#6366f1', cursor: 'pointer' }}
                 onClick={() => setShow3D(v => !v)}
-                style={{ cursor: 'pointer' }}
               >
                 <div className="toggle-knob"></div>
               </div>
@@ -156,16 +176,24 @@ export default function SmartHomePage() {
                 onClick={() => toggle(dev.id)}
               >
                 <div className="sh-dc-glow"></div>
+                <div className="sh-dc-pulse"></div>
                 <div className="sh-dc-top">
                   <span className="sh-dc-icon">{dev.icon}</span>
-                  <div className={`toggle${isOn ? ' on' : ''}`} onClick={e => { e.stopPropagation(); toggle(dev.id) }}>
+                  <div
+                    className={`toggle${isOn ? ' on' : ''}`}
+                    style={{ '--acc': dev.color }}
+                    onClick={e => { e.stopPropagation(); toggle(dev.id) }}
+                  >
                     <div className="toggle-knob"></div>
                   </div>
                 </div>
                 <div className="sh-dc-name">{dev.name}</div>
                 <div className="sh-dc-room">{dev.room}</div>
-                <div className={`sh-dc-status${isOn ? ' on' : ''}`}>
-                  {dev.cat === 'ac' && isOn ? `${temps.ac}°C` : isOn ? '● ON' : '○ OFF'}
+                <div className="sh-dc-footer">
+                  <div className={`sh-dc-status${isOn ? ' on' : ''}`}>
+                    {dev.cat === 'ac' && isOn ? `${temps.ac}°C` : isOn ? '● Active' : '○ Standby'}
+                  </div>
+                  {isOn && <div className="sh-dc-watt">{dev.watts}</div>}
                 </div>
               </div>
             )
@@ -174,10 +202,14 @@ export default function SmartHomePage() {
 
         {/* AC Temperature (if AC is on) */}
         {devices['ac']?.on && (
-          <div className="card" style={{ maxWidth: 420 }}>
-            <div className="card-title" style={{ marginBottom: 14 }}>❄️ Air Conditioner — Temperature</div>
-            <div style={{ textAlign: 'center', fontSize: '2.5rem', fontWeight: 900, color: 'var(--blue)', marginBottom: 12 }}>
-              {temps.ac}°C
+          <div className="card sh-ac-card">
+            <div className="card-title" style={{ marginBottom: 16 }}>❄️ Air Conditioner — Temperature Control</div>
+            <div className="sh-ac-temp-display">
+              <div className="sh-ac-temp-val">{temps.ac}°C</div>
+              <div className="sh-ac-temp-btns">
+                <button className="sh-ac-temp-btn" onClick={() => setTemps(t => ({ ...t, ac: Math.min(30, t.ac + 1) }))}>▲</button>
+                <button className="sh-ac-temp-btn" onClick={() => setTemps(t => ({ ...t, ac: Math.max(16, t.ac - 1) }))}>▼</button>
+              </div>
             </div>
             <input
               type="range"
@@ -186,8 +218,8 @@ export default function SmartHomePage() {
               onChange={e => setTemps(t => ({ ...t, ac: +e.target.value }))}
               className="sh-temp-range-input"
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--text3)', marginTop: 5 }}>
-              <span>16°C</span><span>30°C</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text3)', marginTop: 6 }}>
+              <span>❄️ 16°C</span><span>🔥 30°C</span>
             </div>
           </div>
         )}

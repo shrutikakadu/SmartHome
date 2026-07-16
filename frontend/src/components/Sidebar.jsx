@@ -13,11 +13,10 @@ const NAV_ITEMS = [
   { divider: true, label: 'SYSTEM' },
   { to: '/devices',         icon: '🔌', label: 'Devices' },
   { to: '/emergency',       icon: '🚨', label: 'Emergency', badge: '!' },
-  { to: '/admin',           icon: '⚙️', label: 'Admin' },
   { to: '/ai-training',     icon: '🧠', label: 'AI Training' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('smarthome_user') || '{}')
 
@@ -26,8 +25,12 @@ export default function Sidebar() {
     navigate('/auth')
   }
 
+  const handleNavClick = () => {
+    if (onClose) onClose()
+  }
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? ' sidebar-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">✋</div>
@@ -46,6 +49,7 @@ export default function Sidebar() {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              onClick={handleNavClick}
             >
               <span className="nav-item-icon">{item.icon}</span>
               <span>{item.label}</span>

@@ -1,36 +1,73 @@
-/* Smart Home Control Page */
+/* ============================================================
+   SMART HOME CONTROL PAGE — Premium Device Cards
+============================================================ */
+
+/* Header */
 .sh-ctrl-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
+/* Stats Strip */
 .sh-ctrl-stats {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 18px;
+  border-radius: 14px;
+  padding: 0;
+  overflow: hidden;
 }
-.sh-ctrl-stat { text-align: center; }
-.sh-ctrl-stat-val { display: block; font-size: 1.3rem; font-weight: 800; color: var(--text); }
-.sh-ctrl-stat-lbl { font-size: 0.62rem; color: var(--text3); text-transform: uppercase; }
-.sh-ctrl-stat-divider { width: 1px; height: 30px; background: var(--border); }
+.sh-ctrl-stat {
+  text-align: center;
+  padding: 10px 20px;
+  position: relative;
+}
+.sh-ctrl-stat-val {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+.sh-ctrl-stat-lbl {
+  font-size: 0.58rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-top: 2px;
+  display: block;
+}
+.sh-ctrl-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Quick toggle buttons */
+.sh-ctrl-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 /* Room Tabs */
 .sh-room-tabs {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .sh-room-tab {
-  padding: 7px 16px;
+  padding: 7px 18px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -39,21 +76,26 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.18s;
+  transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
 }
-.sh-room-tab:hover { border-color: var(--border2); color: var(--text); }
+.sh-room-tab:hover {
+  border-color: rgba(99,102,241,0.4);
+  color: var(--text);
+  transform: translateY(-1px);
+}
 .sh-room-tab.active {
-  background: var(--purple-dim);
-  border-color: var(--purple);
-  color: var(--purple);
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15));
+  border-color: rgba(99,102,241,0.5);
+  color: #818cf8;
+  box-shadow: 0 0 14px rgba(99,102,241,0.2);
 }
 
 /* Device Grid */
 .sh-device-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
 .sh-device-card {
@@ -61,46 +103,166 @@
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: 18px;
+  padding: 16px;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  user-select: none;
 }
 .sh-device-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
 }
 .sh-device-card.on {
   border-color: color-mix(in srgb, var(--acc) 50%, transparent);
   background: color-mix(in srgb, var(--acc) 8%, var(--bg2));
 }
+.sh-device-card.on:hover {
+  box-shadow: 0 16px 40px rgba(0,0,0,0.3), 0 0 30px color-mix(in srgb, var(--acc) 20%, transparent);
+}
 
+/* Glow layer */
 .sh-dc-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--acc) 25%, transparent), transparent 60%);
+  background: radial-gradient(circle at 80% 15%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 60%);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.35s;
   pointer-events: none;
 }
 .sh-device-card.on .sh-dc-glow { opacity: 1; }
+
+/* Animated pulse ring when ON */
+.sh-dc-pulse {
+  position: absolute;
+  top: 14px; right: 48px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--acc, #22c55e);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.sh-device-card.on .sh-dc-pulse {
+  opacity: 1;
+  animation: devicePulse 2s ease-in-out infinite;
+}
+@keyframes devicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc) 60%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--acc) 0%, transparent); }
+}
 
 .sh-dc-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
-.sh-dc-icon { font-size: 1.5rem; line-height: 1; }
-.sh-dc-name { font-size: 0.78rem; font-weight: 700; color: var(--text); }
-.sh-dc-room { font-size: 0.65rem; color: var(--text3); }
-.sh-dc-status { font-size: 0.65rem; font-weight: 700; color: var(--text3); margin-top: 4px; }
-.sh-dc-status.on { color: var(--acc, var(--green)); }
+.sh-dc-icon {
+  font-size: 1.7rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--acc) 40%, transparent));
+  transition: filter 0.3s;
+}
+.sh-device-card:not(.on) .sh-dc-icon { filter: none; opacity: 0.5; }
 
-/* AC temperature slider */
+.sh-dc-name { font-size: 0.8rem; font-weight: 700; color: var(--text); }
+.sh-dc-room { font-size: 0.62rem; color: var(--text3); }
+
+.sh-dc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.sh-dc-status {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text3);
+}
+.sh-dc-status.on { color: var(--acc, var(--green)); }
+.sh-dc-watt {
+  font-size: 0.6rem;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--surface2);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.sh-device-card.on .sh-dc-watt {
+  color: color-mix(in srgb, var(--acc) 80%, white);
+  background: color-mix(in srgb, var(--acc) 15%, transparent);
+}
+
+/* Toggle Switch */
+.toggle {
+  width: 34px; height: 18px;
+  background: var(--border);
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--acc, var(--purple)); }
+.toggle-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.toggle.on .toggle-knob { transform: translateX(16px); }
+
+/* AC Temperature Card */
+.sh-ac-card {
+  max-width: 460px;
+  margin-bottom: 0;
+}
+.sh-ac-temp-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.sh-ac-temp-val {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: 'JetBrains Mono', monospace;
+}
+.sh-ac-temp-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sh-ac-temp-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.sh-ac-temp-btn:hover {
+  border-color: rgba(56,189,248,0.5);
+  background: rgba(56,189,248,0.1);
+  color: #38bdf8;
+}
+
 .sh-temp-range-input {
   width: 100%;
   -webkit-appearance: none;
@@ -112,10 +274,17 @@
 }
 .sh-temp-range-input::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px; height: 18px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   background: #fff;
   border: 2px solid var(--purple);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4), 0 0 8px rgba(99,102,241,0.4);
   cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .sh-device-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .sh-ctrl-stat-val { font-size: 1.1rem; }
+  .sh-ctrl-stat { padding: 8px 14px; }
 }

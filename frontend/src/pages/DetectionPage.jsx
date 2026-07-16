@@ -4,14 +4,45 @@ import { recognizeSign } from '../utils/recognizer'
 import './detection.css'
 
 const RECENT_GESTURES = [
-  { char: '👋', label: 'Hello',    time: '10:53:24 AM' },
-  { char: '✌️', label: 'OK',      time: '10:53:18 AM' },
-  { char: '👍', label: 'Yes',     time: '10:53:12 AM' },
-  { char: '🤚', label: 'No',      time: '10:53:06 AM' },
-  { char: '🙏', label: 'Thanks',  time: '10:52:58 AM' },
-  { char: '🤙', label: 'Help',    time: '10:52:50 AM' },
-  { char: '💡', label: 'Light ON',time: '10:52:40 AM' },
+  { char: '👋', label: 'Hello',    time: '10:53 AM' },
+  { char: '✌️', label: 'OK',      time: '10:53 AM' },
+  { char: '👍', label: 'Yes',     time: '10:53 AM' },
+  { char: '🤚', label: 'No',      time: '10:53 AM' },
+  { char: '🙏', label: 'Thanks',  time: '10:52 AM' },
+  { char: '🤙', label: 'Help',    time: '10:52 AM' },
+  { char: '💡', label: 'Light ON',time: '10:52 AM' },
 ]
+
+// Confidence ring SVG component
+function ConfidenceRing({ value }) {
+  const r = 40
+  const circ = 2 * Math.PI * r
+  const offset = circ - (value / 100) * circ
+
+  return (
+    <div className="det-conf-ring-wrap">
+      <svg className="det-conf-ring-svg" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="confGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#2dd4bf" />
+          </linearGradient>
+        </defs>
+        <circle className="det-conf-ring-bg" cx="50" cy="50" r={r} />
+        <circle
+          className="det-conf-ring-fill"
+          cx="50" cy="50" r={r}
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="det-conf-ring-text">
+        <span className="det-conf-val">{value}</span>
+        <span className="det-conf-unit">%</span>
+      </div>
+    </div>
+  )
+}
 
 export default function DetectionPage() {
   const videoRef = useRef(null)
@@ -20,7 +51,7 @@ export default function DetectionPage() {
   const cameraRef = useRef(null)
   const streamRef = useRef(null)
   const [cameraOn, setCameraOn] = useState(false)
-  const [detected, setDetected] = useState({ char: 'OK', confidence: 96.35, lang: 'Indian Sign Language' })
+  const [detected, setDetected] = useState({ char: 'OK', confidence: 96, lang: 'Indian Sign Language' })
   const [fps, setFps] = useState('0')
   const [handDetected, setHandDetected] = useState(false)
   const frameCountRef = useRef(0)
@@ -52,7 +83,7 @@ export default function DetectionPage() {
         if (res.multiHandLandmarks?.length > 0) {
           setHandDetected(true)
           for (const lm of res.multiHandLandmarks) {
-            if (window.drawConnectors) window.drawConnectors(ctx, lm, window.HAND_CONNECTIONS, { color: '#2dd4bf', lineWidth: 3 })
+            if (window.drawConnectors) window.drawConnectors(ctx, lm, window.HAND_CONNECTIONS, { color: '#2dd4bf', lineWidth: 2.5 })
             if (window.drawLandmarks) window.drawLandmarks(ctx, lm, { color: '#f59e0b', lineWidth: 2, radius: 3 })
           }
           const r = recognizeSign(res.multiHandLandmarks[0])
@@ -85,7 +116,6 @@ export default function DetectionPage() {
     }
   }
 
-  // Attach stream to video element AFTER cameraOn causes it to render
   useEffect(() => {
     if (cameraOn && streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current
@@ -93,7 +123,6 @@ export default function DetectionPage() {
     }
   }, [cameraOn])
 
-  // FPS counter using requestAnimationFrame
   useEffect(() => {
     if (!cameraOn) return
     let rafId
@@ -134,13 +163,13 @@ export default function DetectionPage() {
   return (
     <Layout title="Real-time Detection">
       <div className="anim-fade-up">
-        <div className="page-header" style={{ marginBottom: 18 }}>
+        <div className="page-header" style={{ marginBottom: 20 }}>
           <h1>🤖 Live Sign Language Detection</h1>
-          <p>Real-time gesture recognition powered by AI</p>
+          <p>Real-time gesture recognition powered by AI — sub-50ms latency</p>
         </div>
 
         <div className="det-layout">
-          {/* Camera feed */}
+          {/* Camera Feed */}
           <div className="card det-cam-card">
             <div className="det-cam-header">
               <div className="det-cam-badge">
@@ -150,31 +179,50 @@ export default function DetectionPage() {
                 {handDetected && (
                   <span className="det-hand-badge">✋ Hand Detected</span>
                 )}
-                <span className="det-fps">FPS: {fps}</span>
+                <span className="det-fps">⚡ {fps} FPS</span>
               </div>
             </div>
 
             <div className="det-video-wrap">
-              <video ref={videoRef} autoPlay playsInline muted className="det-video" style={{ display: cameraOn ? 'block' : 'none' }} />
-              <canvas ref={canvasRef} className="det-canvas" style={{ display: cameraOn ? 'block' : 'none' }} />
+              {/* Decorative corner brackets */}
+              <div className="det-video-corners"></div>
+              {/* Grid overlay when idle */}
+              {!cameraOn && <div className="det-grid-overlay"></div>}
+
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="det-video"
+                style={{ display: cameraOn ? 'block' : 'none' }}
+              />
+              <canvas
+                ref={canvasRef}
+                className="det-canvas"
+                style={{ display: cameraOn ? 'block' : 'none' }}
+              />
+
               {cameraOn && <div className="det-scan-line"></div>}
+
               {cameraOn && detected && (
                 <div className="det-result-pill">
                   <div className="det-result-char">{detected.char}</div>
                   <div className="det-result-label">Detected</div>
                 </div>
               )}
+
               {!cameraOn && (
                 <div className="det-idle">
-                  <span>📷</span>
+                  <div className="det-idle-icon">🤚</div>
                   <p>Camera not started</p>
-                  <p className="det-idle-hint">Click "Start Livefeed" to begin</p>
+                  <p className="det-idle-hint">Click "Start Livefeed" below to begin</p>
                 </div>
               )}
             </div>
 
             <button
-              className={`btn btn-primary det-cam-btn`}
+              className={`btn det-cam-btn${cameraOn ? ' stop-btn' : ''}`}
               onClick={cameraOn ? stopCamera : startCamera}
             >
               {cameraOn ? '⏹ Stop Livefeed' : '▶ Start Livefeed'}
@@ -184,29 +232,41 @@ export default function DetectionPage() {
           {/* Detection Panel */}
           <div className="det-panel">
             {/* Detected Gesture */}
-            <div className="card">
-              <div className="card-title" style={{ marginBottom: 12 }}>Detected Gesture</div>
+            <div className="card det-gesture-card">
+              <div className="card-title" style={{ marginBottom: 14, textAlign: 'center' }}>Detected Gesture</div>
               <div className="det-gesture-display">
                 <div className="det-gesture-char">{detected.char}</div>
-                <span className="badge badge-green" style={{ fontSize: '0.9rem', padding: '4px 14px' }}>{detected.char}</span>
+                <div className="det-gesture-badge">
+                  <span className="live-dot" style={{ background: '#22c55e' }}></span>
+                  {detected.char}
+                </div>
               </div>
             </div>
 
-            {/* Confidence */}
-            <div className="card">
-              <div className="card-title" style={{ marginBottom: 10 }}>Confidence</div>
-              <div className="det-confidence-val">{detected.confidence}%</div>
-              <div className="db-progress-track" style={{ marginTop: 8 }}>
-                <div className="db-progress-fill" style={{ width: `${detected.confidence}%`, background: 'var(--green)' }}></div>
+            {/* Confidence Ring */}
+            <div className="card det-confidence-card">
+              <div className="card-title" style={{ marginBottom: 14, textAlign: 'center' }}>Confidence Score</div>
+              <ConfidenceRing value={detected.confidence} />
+              <div className="db-progress-track" style={{ marginTop: 10 }}>
+                <div
+                  className="db-progress-fill"
+                  style={{
+                    width: `${detected.confidence}%`,
+                    background: 'linear-gradient(90deg, #6366f1, #2dd4bf)'
+                  }}
+                ></div>
               </div>
             </div>
 
             {/* Language */}
-            <div className="card">
-              <div className="card-title" style={{ marginBottom: 10 }}>Language</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.5rem' }}>🇮🇳</span>
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{detected.lang}</span>
+            <div className="card det-lang-card">
+              <div className="card-title" style={{ marginBottom: 12 }}>Language</div>
+              <div className="det-lang-row">
+                <div className="det-lang-flag">🇮🇳</div>
+                <div className="det-lang-info">
+                  <span className="det-lang-name">{detected.lang}</span>
+                  <span className="det-lang-sub">ISL · Fingerspelling Model v2.1</span>
+                </div>
               </div>
             </div>
           </div>
@@ -215,14 +275,15 @@ export default function DetectionPage() {
         {/* Recent Gestures */}
         <div className="card">
           <div className="card-header">
-            <div className="card-title">Recent Gestures</div>
-            <span className="badge badge-purple">Last 7</span>
+            <div className="card-title">🕒 Recent Gestures</div>
+            <span className="badge badge-purple">Last {RECENT_GESTURES.length}</span>
           </div>
           <div className="det-recent-grid">
             {RECENT_GESTURES.map((g, i) => (
               <div key={i} className="det-recent-item">
                 <div className="det-recent-icon">{g.char}</div>
                 <div className="det-recent-label">{g.label}</div>
+                <div className="det-recent-time">{g.time}</div>
               </div>
             ))}
           </div>

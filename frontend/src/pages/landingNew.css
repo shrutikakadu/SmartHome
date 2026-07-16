@@ -983,6 +983,72 @@ html {
   background: rgba(10, 11, 26, 0.9);
 }
 
+/* Contact Section */
+.land-contact {
+  position: relative;
+  z-index: 10;
+}
+.land-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 24px;
+}
+.land-contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: center;
+  transition: all 0.25s;
+}
+.land-contact-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+.land-contact-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+.land-contact-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.land-contact-info {
+  font-size: 0.82rem;
+  color: var(--text2);
+  margin-bottom: 10px;
+}
+.land-contact-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--purple);
+  text-decoration: none;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: var(--purple-dim);
+  border: 1px solid var(--border2);
+  transition: all 0.2s;
+}
+.land-contact-link:hover {
+  background: var(--purple);
+  color: #fff;
+  border-color: var(--purple);
+}
+
+@media (max-width: 768px) {
+  .land-contact-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 /* ============================================================
    SCROLL REVEAL SYSTEM (Lightweight, High Performance)
 ============================================================ */
@@ -1127,6 +1193,7 @@ html {
     gap: 16px;
     text-align: center;
   }
+  .land-contact-card { padding: 22px 18px; }
 }
 
 @media (max-width: 480px) {
