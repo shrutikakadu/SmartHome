@@ -1,8 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { authAPI } from '../utils/api'
 import './auth.css'
 
+// ── Local Auth Helpers (no backend needed) ────────────────────────────────────
+// All users are stored in localStorage under the key 'smarthome_users_db'
+// The demo admin account is always available as a fallback.
+
+const USERS_DB_KEY = 'smarthome_users_db'
+const SESSION_KEY  = 'smarthome_user'
+
+function simpleHash(str) {
+  // A very lightweight hash for demo purposes (not for production)
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0
+  }
+  return h.toString(16)
+}
+
+function getUsers() {
+  try {
+    const raw = localStorage.getItem(USERS_DB_KEY)
+    const users = raw ? JSON.parse(raw) : {}
+    // Always ensure demo admin exists
+    if (!users['admin@home.com']) {
+      users['admin@home.com'] = {
+        name: 'Alex (Admin)',
+        email: 'admin@home.com',
+        passwordHash: simpleHash('admin123'),
+        role: 'admin',
+        created: new Date().toISOString().split('T')[0],
+      }
+      localStorage.setItem(USERS_DB_KEY, JSON.stringify(users))
+    }
+    return users
+  } catch {
+    return {}
+  }
+}
+
+function saveUsers(users) {
+  localStorage.setItem(USERS_DB_KEY, JSON.stringify(users))
+}
+
+function makeToken() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+}
+
+function localRegister(name, email, password) {
+  const users = getUsers()
+  if (users[email]) {
+    throw new Error('Email already registered')
+  }
+  const newUser = {
+    name,
+    email,
+    passwordHash: simpleHash(password),
+    role: 'user',
+    created: new Date().toISOString().split('T')[0],
+  }
+  users[email] = newUser
+  saveUsers(users)
+  return {
+    token: makeToken(),
+    user: { name: newUser.name, email: newUser.email, role: newUser.role },
+  }
+}
+
+function localLogin(email, password) {
+  const users = getUsers()
+  const user = users[email]
+  if (!user) throw new Error('No account found with this email')
+  if (user.passwordHash !== simpleHash(password)) throw new Error('Incorrect password')
+  return {
+    token: makeToken(),
+    user: { name: user.name, email: user.email, role: user.role },
+  }
+}
+
+// ── Eye Icon ──────────────────────────────────────────────────────────────────
 function EyeIcon({ open }) {
   return open ? (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -18,18 +94,37 @@ function EyeIcon({ open }) {
   )
 }
 
+// ── AuthPage ──────────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [mode, setMode] = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'login')
-  const [form, setForm] = useState({ name: '', email: '', password: '' })
-  const [errors, setErrors] = useState({})
+  const [mode, setMode]       = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'login')
+  const [form, setForm]       = useState({ name: '', email: '', password: '' })
+  const [errors, setErrors]   = useState({})
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [shake, setShake] = useState(false)
+  const [shake, setShake]     = useState(false)
+  const [success, setSuccess] = useState('')
 
+  // Compute particle positions ONCE — avoids flickering on every re-render
+  // Only 8 particles to reduce GPU animation load
+  const particles = useMemo(() =>
+    Array.from({ length: 8 }, () => ({
+      left:     `${Math.random() * 100}%`,
+      top:      `${Math.random() * 100}%`,
+      width:    `${2 + Math.random() * 3}px`,
+      height:   `${2 + Math.random() * 3}px`,
+      delay:    `${Math.random() * 6}s`,
+      duration: `${7 + Math.random() * 9}s`,
+    }))
+  , [])
+
+  // Initialise the demo account on first load
+  useEffect(() => { getUsers() }, [])
+
+  // Redirect if already logged in
   useEffect(() => {
-    const user = localStorage.getItem('smarthome_user')
+    const user = localStorage.getItem(SESSION_KEY)
     if (user) navigate('/dashboard', { replace: true })
   }, [navigate])
 
@@ -41,42 +136,46 @@ export default function AuthPage() {
     return e
   }
 
+  const triggerShake = () => {
+    setShake(true)
+    setTimeout(() => setShake(false), 600)
+  }
+
   const handleSubmit = async (ev) => {
     ev.preventDefault()
     const e = validate()
-    if (Object.keys(e).length) { setErrors(e); setShake(true); setTimeout(() => setShake(false), 600); return }
+    if (Object.keys(e).length) { setErrors(e); triggerShake(); return }
     setErrors({})
     setLoading(true)
 
     try {
       let data
       if (mode === 'login') {
-        data = await authAPI.login(form.email, form.password)
+        data = localLogin(form.email, form.password)
       } else {
-        data = await authAPI.register(form.name, form.email, form.password)
+        data = localRegister(form.name, form.email, form.password)
+        setSuccess(`Account created! Welcome, ${data.user.name} 🎉`)
+        await new Promise(r => setTimeout(r, 800))
       }
 
-      localStorage.setItem('smarthome_user', JSON.stringify({
-        name: data.user.name,
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        name:  data.user.name,
         email: data.user.email,
         token: data.token,
-        role: data.user.role,
+        role:  data.user.role,
       }))
 
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Something went wrong'
-      if (msg.toLowerCase().includes('email') && !msg.toLowerCase().includes('password')) {
+      const msg = err?.message || 'Something went wrong'
+      if (msg.toLowerCase().includes('email')) {
         setErrors({ email: msg })
       } else if (msg.toLowerCase().includes('password')) {
         setErrors({ password: msg })
-      } else if (msg.toLowerCase().includes('name')) {
-        setErrors({ name: msg })
       } else {
-        setErrors({ password: msg })
+        setErrors({ general: msg })
       }
-      setShake(true)
-      setTimeout(() => setShake(false), 600)
+      triggerShake()
     } finally {
       setLoading(false)
     }
@@ -86,25 +185,27 @@ export default function AuthPage() {
     setMode(m => m === 'login' ? 'signup' : 'login')
     setForm({ name: '', email: '', password: '' })
     setErrors({})
+    setSuccess('')
   }
 
   const fillDemo = () => {
     setForm({ name: 'Alex', email: 'admin@home.com', password: 'admin123' })
     setErrors({})
+    setSuccess('')
   }
 
   return (
     <div className="auth-root">
-      {/* ── Particles ── */}
+      {/* ── Particles — positions fixed via useMemo to prevent flicker ── */}
       <div className="auth-particles" aria-hidden="true">
-        {Array.from({ length: 14 }).map((_, i) => (
+        {particles.map((p, i) => (
           <div key={i} className="auth-particle" style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${2 + Math.random() * 3}px`,
-            height: `${2 + Math.random() * 3}px`,
-            animationDelay: `${Math.random() * 6}s`,
-            animationDuration: `${7 + Math.random() * 9}s`,
+            left: p.left,
+            top: p.top,
+            width: p.width,
+            height: p.height,
+            animationDelay: p.delay,
+            animationDuration: p.duration,
           }} />
         ))}
       </div>
@@ -168,11 +269,21 @@ export default function AuthPage() {
             <p className="auth-subtitle">
               {mode === 'login'
                 ? 'Sign in to your smart home dashboard'
-                : 'Set up your Smart Home account'}
+                : 'Set up your Smart Home account — it only takes a second!'}
             </p>
           </div>
 
-          {/* Demo credentials hint */}
+          {/* Success banner */}
+          {success && (
+            <div className="auth-success-banner">✅ {success}</div>
+          )}
+
+          {/* General error */}
+          {errors.general && (
+            <div className="auth-general-error">⚠️ {errors.general}</div>
+          )}
+
+          {/* Demo credentials hint (login only) */}
           {mode === 'login' && (
             <div className="auth-demo-hint">
               <span>🎯 Demo account:</span>
@@ -191,7 +302,7 @@ export default function AuthPage() {
                     id="auth-name"
                     className="auth-input"
                     type="text"
-                    placeholder="Alex Johnson"
+                    placeholder="e.g. John Smith"
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     autoComplete="name"

@@ -177,8 +177,7 @@ async def get_profile(authorization: Optional[str] = Header(None)):
     uid = get_user_id(authorization)
     if not uid:
         raise HTTPException(401, "Not authenticated")
-    from bson import ObjectId
-    user = await db.users_col.find_one({"_id": ObjectId(uid)})
+    user = await db.users_col.find_one({"_id": uid})
     if not user:
         raise HTTPException(404, "User not found")
     return {"id": str(user["_id"]), "name": user["name"], "email": user["email"], "role": user["role"], "phone": user.get("phone", ""), "created": user.get("created", "")}
@@ -188,13 +187,12 @@ async def update_profile(req: ProfileUpdate, authorization: Optional[str] = Head
     uid = get_user_id(authorization)
     if not uid:
         raise HTTPException(401, "Not authenticated")
-    from bson import ObjectId
     update = {}
     if req.name: update["name"] = req.name
     if req.email: update["email"] = req.email
     if update:
-        await db.users_col.update_one({"_id": ObjectId(uid)}, {"$set": update})
-    user = await db.users_col.find_one({"_id": ObjectId(uid)})
+        await db.users_col.update_one({"_id": uid}, {"$set": update})
+    user = await db.users_col.find_one({"_id": uid})
     return {"id": str(user["_id"]), "name": user["name"], "email": user["email"], "role": user["role"]}
 
 
@@ -328,8 +326,7 @@ async def add_emergency_contact(req: EmergencyContactIn):
 
 @app.delete("/emergency/contacts/{contact_id}")
 async def delete_emergency_contact(contact_id: str):
-    from bson import ObjectId
-    await db.emergency_contacts_col.delete_one({"_id": ObjectId(contact_id)})
+    await db.emergency_contacts_col.delete_one({"_id": contact_id})
     return {"success": True}
 
 @app.post("/emergency/trigger")

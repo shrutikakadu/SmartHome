@@ -38,47 +38,79 @@ const FURNITURE = {
 
 const ROOM_TO_ID = { 'Living Room': 'living', Bedroom: 'bedroom', Kitchen: 'kitchen', Study: 'study', Bathroom: 'bathroom', 'Main Door': 'door' }
 
-function Room3D({ room, status, isActive, devices, deviceStates, onDeviceToggle, onRoomClick, wallH }) {
+const ROOM_TEMPS = {
+  living: { temp: 24, label: '24°C', color: 'rgba(245, 158, 11, 0.4)' },
+  bedroom: { temp: 21, label: '21°C', color: 'rgba(56, 189, 248, 0.4)' },
+  kitchen: { temp: 28, label: '28°C', color: 'rgba(239, 68, 68, 0.4)' },
+  study: { temp: 22, label: '22°C', color: 'rgba(45, 212, 191, 0.4)' },
+  bathroom: { temp: 26, label: '26°C', color: 'rgba(244, 114, 182, 0.4)' },
+  door: { temp: 29, label: '29°C', color: 'rgba(107, 114, 128, 0.2)' }
+}
+
+const ROOM_OCCUPANCY = {
+  living: { occupied: true, label: 'Occupied 🚶' },
+  bedroom: { occupied: false, label: 'Vacant' },
+  kitchen: { occupied: true, label: 'Occupied 🍳' },
+  study: { occupied: false, label: 'Vacant' },
+  bathroom: { occupied: false, label: 'Vacant' },
+  door: { occupied: false, label: 'Locked 🔒' }
+}
+
+function Room3D({ room, status, isActive, devices, deviceStates, onDeviceToggle, onRoomClick, wallH, twinMode, pointTarget }) {
   const st = status[room.id]
   const furn = FURNITURE[room.id] || []
+  
+  // Custom floor color based on heatmap mode
+  const floorBg = useMemo(() => {
+    if (twinMode === 'temp') return ROOM_TEMPS[room.id]?.color
+    return st.active ? 'rgba(45, 212, 191, 0.15)' : 'transparent'
+  }, [twinMode, st.active, room.id])
 
   return (
     <div
-      className={`h3d-room${st.active ? ' active' : ''}${isActive ? ' selected' : ''}`}
+      className={`h3d-room${st.active ? ' active' : ''}${isActive ? ' selected' : ''} ${twinMode === 'temp' ? 'heatmap' : ''}`}
       style={{ left: room.left, top: room.top, width: room.w, height: room.h, '--rc': room.color }}
       onClick={() => onRoomClick(room.id)}
     >
       {/* Floor */}
-      <div className="h3d-face h3d-floor-face" style={{ '--rc': room.color }}>
-        {st.active && <div className="h3d-floor-glow" />}
+      <div className="h3d-face h3d-floor-face" style={{ '--rc': room.color, background: floorBg }}>
+        {st.active && twinMode !== 'temp' && <div className="h3d-floor-glow" />}
       </div>
 
       {/* Back wall */}
-      <div className="h3d-face h3d-wall-back" style={{ '--rc': room.color }} />
+      <div className="h3d-face h3d-wall-back" style={{ '--rc': room.color, opacity: twinMode === 'temp' ? 0.2 : 0.8 }} />
 
       {/* Left wall */}
-      <div className="h3d-face h3d-wall-left" style={{ '--rc': room.color }} />
+      <div className="h3d-face h3d-wall-left" style={{ '--rc': room.color, opacity: twinMode === 'temp' ? 0.2 : 0.8 }} />
 
       {/* Right wall */}
-      <div className="h3d-face h3d-wall-right" style={{ '--rc': room.color }} />
+      <div className="h3d-face h3d-wall-right" style={{ '--rc': room.color, opacity: twinMode === 'temp' ? 0.2 : 0.8 }} />
 
       {/* Front wall */}
-      <div className="h3d-face h3d-wall-front" style={{ '--rc': room.color }} />
+      <div className="h3d-face h3d-wall-front" style={{ '--rc': room.color, opacity: twinMode === 'temp' ? 0.2 : 0.8 }} />
 
       {/* Furniture */}
       {furn.map((f, i) => (
         <div
           key={i}
           className={`h3d-furn h3d-furn-${f.type}`}
-          style={{ left: f.left, top: f.top, bottom: f.bottom, width: f.w, height: f.h }}
+          style={{ left: f.left, top: f.top, bottom: f.bottom, width: f.w, height: f.h, opacity: twinMode === 'temp' ? 0.1 : 0.6 }}
         />
       ))}
 
       {/* Room label */}
-      <div className="h3d-room-label">{room.name}</div>
+      <div className="h3d-room-label">
+        <div>{room.name}</div>
+        {twinMode === 'temp' && <div className="h3d-room-temp-lbl" style={{ color: ROOM_TEMPS[room.id]?.color.replace('0.4','1.0') }}>{ROOM_TEMPS[room.id]?.label}</div>}
+        {twinMode === 'occupancy' && (
+          <div className={`h3d-room-occ-lbl ${ROOM_OCCUPANCY[room.id]?.occupied ? 'occupied' : 'vacant'}`}>
+            {ROOM_OCCUPANCY[room.id]?.label}
+          </div>
+        )}
+      </div>
 
       {/* Devices */}
-      <div className="h3d-devices">
+      <div className="h3d-devices" style={{ opacity: twinMode === 'temp' ? 0.3 : 1 }}>
         {room.devices.map(devId => {
           const dev = devices.find(d => d.id === devId)
           if (!dev) return null
@@ -86,7 +118,7 @@ function Room3D({ room, status, isActive, devices, deviceStates, onDeviceToggle,
           return (
             <div
               key={devId}
-              className={`h3d-dev${isOn ? ' on' : ''}`}
+              className={`h3d-dev${isOn ? ' on' : ''}${pointTarget === devId ? ' pointing-target' : ''}`}
               title={dev.name}
               onClick={(e) => { e.stopPropagation(); onDeviceToggle(devId) }}
             >
@@ -100,7 +132,7 @@ function Room3D({ room, status, isActive, devices, deviceStates, onDeviceToggle,
   )
 }
 
-export default function Home3D({ devices, deviceStates, onDeviceToggle, activeRoom, onRoomClick }) {
+export default function Home3D({ devices, deviceStates, onDeviceToggle, activeRoom, onRoomClick, twinMode, pointTarget }) {
   const [rotX, setRotX] = useState(50)
   const [rotZ, setRotZ] = useState(-30)
   const [zoom, setZoom] = useState(1)
@@ -181,6 +213,8 @@ export default function Home3D({ devices, deviceStates, onDeviceToggle, activeRo
               onDeviceToggle={onDeviceToggle}
               onRoomClick={onRoomClick}
               wallH={WALL_H}
+              twinMode={twinMode}
+              pointTarget={pointTarget}
             />
           ))}
         </div>

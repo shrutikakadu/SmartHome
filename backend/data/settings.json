@@ -1,0 +1,7 @@
+{
+  "_id": "main",
+  "notifications": true,
+  "dark_mode": true,
+  "sound_effects": false,
+  "mqtt_auto_connect": true
+}

@@ -14,9 +14,24 @@ async function request(method, path, body = null) {
   const opts = { method, headers }
   if (body) opts.body = JSON.stringify(body)
 
-  const res = await fetch(`${BASE}${path}`, opts)
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.detail || 'Request failed')
+  let res
+  try {
+    res = await fetch(`${BASE}${path}`, opts)
+  } catch (networkErr) {
+    // Backend is unreachable (ECONNREFUSED, offline, etc.)
+    throw new Error('Backend is not available. Please start the server.')
+  }
+
+  // Safely parse JSON — response may be empty on 502/504 errors
+  let data = {}
+  try {
+    const text = await res.text()
+    if (text) data = JSON.parse(text)
+  } catch {
+    // Non-JSON or empty body — keep data as {}
+  }
+
+  if (!res.ok) throw new Error(data.detail || data.message || `Request failed (${res.status})`)
   return data
 }
 

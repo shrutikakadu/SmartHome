@@ -5,8 +5,7 @@ import './App.css'
 import LandingPage            from './pages/LandingPage'
 import AuthPage               from './pages/AuthPage'
 import DashboardPage          from './pages/DashboardPage'
-import PremiumDashboard       from './pages/PremiumDashboard'
-import SmartHomePage          from './pages/SmartHomePage'
+import SmartHomePage          from './pages/SmartHome'
 import DetectionPage          from './pages/DetectionPage'
 import GestureHistoryPage     from './pages/GestureHistoryPage'
 import AnalyticsPage          from './pages/AnalyticsPage'
@@ -35,7 +34,7 @@ export default function App() {
         <Route path="/auth" element={<AuthPage />} />
 
         {/* Protected — all inner pages */}
-        <Route path="/dashboard"      element={<Protected><DashboardPage /></Protected>} />
+        <Route path="/dashboard"      element={<Protected><SmartHomePage /></Protected>} />
         <Route path="/smart-home"     element={<Protected><SmartHomePage /></Protected>} />
         <Route path="/detection"      element={<Protected><DetectionPage /></Protected>} />
         <Route path="/gesture-history" element={<Protected><GestureHistoryPage /></Protected>} />

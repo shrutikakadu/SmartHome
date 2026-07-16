@@ -1,0 +1,102 @@
+[
+  {
+    "type": "warning",
+    "title": "\ud83d\udea8 EMERGENCY",
+    "message": "CALL alert triggered",
+    "icon": "\ud83d\udea8",
+    "timestamp": "18:27:02",
+    "read": false,
+    "created_at": "2026-07-16T18:27:02.928560",
+    "_id": "1"
+  },
+  {
+    "type": "warning",
+    "title": "\ud83d\udea8 EMERGENCY",
+    "message": "LOCATION alert triggered",
+    "icon": "\ud83d\udea8",
+    "timestamp": "18:27:05",
+    "read": false,
+    "created_at": "2026-07-16T18:27:05.104979",
+    "_id": "2"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingFan turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:04",
+    "read": false,
+    "created_at": "2026-07-16T19:07:04.159771",
+    "_id": "3"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingFan turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:04",
+    "read": false,
+    "created_at": "2026-07-16T19:07:04.195573",
+    "_id": "4"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingFan turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:05",
+    "read": false,
+    "created_at": "2026-07-16T19:07:05.176707",
+    "_id": "5"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingFan turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:05",
+    "read": false,
+    "created_at": "2026-07-16T19:07:05.203568",
+    "_id": "6"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingFan turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:07",
+    "read": false,
+    "created_at": "2026-07-16T19:07:07.340436",
+    "_id": "7"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingFan turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:07:07",
+    "read": false,
+    "created_at": "2026-07-16T19:07:07.358242",
+    "_id": "8"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:11:14",
+    "read": false,
+    "created_at": "2026-07-16T19:11:14.188862",
+    "_id": "9"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "19:11:14",
+    "read": false,
+    "created_at": "2026-07-16T19:11:14.287694",
+    "_id": "10"
+  }
+]
