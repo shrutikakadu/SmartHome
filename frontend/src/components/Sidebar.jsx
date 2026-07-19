@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/analytics',       icon: '📈', label: 'Analytics' },
   { to: '/ai-assistant',    icon: '💬', label: 'AI Assistant' },
   { to: '/voice-speech',    icon: '🎙️', label: 'Voice & Speech' },
+  { to: '/ecosystem',       icon: '🔌', label: 'Universal Hub' },
   { divider: true, label: 'SYSTEM' },
   { to: '/devices',         icon: '🔌', label: 'Devices' },
   { to: '/emergency',       icon: '🚨', label: 'Emergency', badge: '!' },
@@ -42,6 +43,10 @@ export default function Sidebar({ open, onClose }) {
         {NAV_ITEMS.map((item, i) => {
           if (item.divider) {
             return <div key={i} className="sidebar-section-label">{item.label}</div>
+          }
+          // Hide Universal Hub for standard users
+          if (item.to === '/ecosystem' && user.role !== 'admin') {
+            return null
           }
           return (
             <NavLink

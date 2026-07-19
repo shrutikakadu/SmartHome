@@ -14,6 +14,7 @@ import VoiceSpeechPage        from './pages/VoiceSpeechPage'
 import EmergencyPage          from './pages/EmergencyPage'
 import DeviceManagementPage   from './pages/DeviceManagementPage'
 import AITrainingPage         from './pages/AITrainingPage'
+import EcosystemPage          from './pages/EcosystemPage'
 
 function ProtectedRoute({ children }) {
   const user = localStorage.getItem('smarthome_user')
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/emergency"      element={<Protected><EmergencyPage /></Protected>} />
         <Route path="/devices"        element={<Protected><DeviceManagementPage /></Protected>} />
         <Route path="/ai-training"    element={<Protected><AITrainingPage /></Protected>} />
+        <Route path="/ecosystem"      element={<Protected><EcosystemPage /></Protected>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

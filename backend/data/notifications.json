@@ -98,5 +98,275 @@
     "read": false,
     "created_at": "2026-07-16T19:11:14.287694",
     "_id": "10"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.246160",
+    "_id": "11"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.259243",
+    "_id": "12"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.655629",
+    "_id": "13"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.664068",
+    "_id": "14"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.881713",
+    "_id": "15"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:13",
+    "read": false,
+    "created_at": "2026-07-19T11:43:13.893987",
+    "_id": "16"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:14",
+    "read": false,
+    "created_at": "2026-07-19T11:43:14.444606",
+    "_id": "17"
+  },
+  {
+    "type": "info",
+    "title": "Device OFF",
+    "message": "livingLight turned off",
+    "icon": "\ud83d\udca1",
+    "timestamp": "11:43:14",
+    "read": false,
+    "created_at": "2026-07-19T11:43:14.473677",
+    "_id": "18"
+  },
+  {
+    "type": "info",
+    "title": "Synced: TP-Link Kasa",
+    "message": "Synced 3 devices from TP-Link Kasa.",
+    "icon": "\ud83d\udd0c",
+    "timestamp": "11:46:20",
+    "read": false,
+    "created_at": "2026-07-19T11:46:20.357518",
+    "_id": "19"
+  },
+  {
+    "type": "info",
+    "title": "Hub Configuration Updated",
+    "message": "Saved configuration for Option 3",
+    "icon": "\u2699\ufe0f",
+    "timestamp": "11:47:42",
+    "read": false,
+    "created_at": "2026-07-19T11:47:42.595210",
+    "_id": "20"
+  },
+  {
+    "type": "info",
+    "title": "AI Automation Command",
+    "message": "Parsed command: Turn off everything except the refrigerator.",
+    "icon": "\ud83e\udde0",
+    "timestamp": "11:48:52",
+    "read": false,
+    "created_at": "2026-07-19T11:48:52.161160",
+    "_id": "21"
+  },
+  {
+    "type": "info",
+    "title": "Synced: TP-Link Kasa",
+    "message": "Synced 3 devices from TP-Link Kasa.",
+    "icon": "\ud83d\udd0c",
+    "timestamp": "11:52:43",
+    "read": false,
+    "created_at": "2026-07-19T11:52:43.044112",
+    "_id": "22"
+  },
+  {
+    "type": "info",
+    "title": "Synced: TP-Link Kasa",
+    "message": "Synced 3 devices from TP-Link Kasa.",
+    "icon": "\ud83d\udd0c",
+    "timestamp": "11:56:20",
+    "read": false,
+    "created_at": "2026-07-19T11:56:20.027571",
+    "_id": "23"
+  },
+  {
+    "type": "info",
+    "title": "Synced: Philips Hue",
+    "message": "Synced 3 devices from Philips Hue.",
+    "icon": "\ud83d\udca1",
+    "timestamp": "12:00:07",
+    "read": false,
+    "created_at": "2026-07-19T12:00:07.398152",
+    "_id": "24"
+  },
+  {
+    "type": "info",
+    "title": "Synced: Philips Hue",
+    "message": "Synced 3 devices from Philips Hue.",
+    "icon": "\ud83d\udca1",
+    "timestamp": "12:00:09",
+    "read": false,
+    "created_at": "2026-07-19T12:00:09.546980",
+    "_id": "25"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.com:18831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:13:56",
+    "read": false,
+    "created_at": "2026-07-19T12:13:56.546723",
+    "_id": "26"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.combroker.hivemq.com:18831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:14:55",
+    "read": false,
+    "created_at": "2026-07-19T12:14:55.594602",
+    "_id": "27"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.combroker.hivemq.com:188318831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:16:39",
+    "read": false,
+    "created_at": "2026-07-19T12:16:39.857876",
+    "_id": "28"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.combroker.hivemq.com127.0.0.1:188318831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:17:06",
+    "read": false,
+    "created_at": "2026-07-19T12:17:06.823646",
+    "_id": "29"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.combroker.hivemq.com127.0.0.1:188318831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:20:02",
+    "read": false,
+    "created_at": "2026-07-19T12:20:02.797037",
+    "_id": "30"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.combroker.hivemq.com127.0.0.1:18831883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:20:40",
+    "read": false,
+    "created_at": "2026-07-19T12:20:40.554348",
+    "_id": "31"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "12:21:18",
+    "read": false,
+    "created_at": "2026-07-19T12:21:18.095575",
+    "_id": "32"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "12:21:18",
+    "read": false,
+    "created_at": "2026-07-19T12:21:18.124824",
+    "_id": "33"
+  },
+  {
+    "type": "info",
+    "title": "MQTT Broker Connection",
+    "message": "Reconnecting to broker.hivemq.com:1883...",
+    "icon": "\ud83d\udce1",
+    "timestamp": "12:23:29",
+    "read": false,
+    "created_at": "2026-07-19T12:23:29.813416",
+    "_id": "34"
+  },
+  {
+    "type": "info",
+    "title": "Device ON",
+    "message": "livingLight turned on",
+    "icon": "\ud83d\udca1",
+    "timestamp": "12:28:10",
+    "read": false,
+    "created_at": "2026-07-19T12:28:10.233544",
+    "_id": "35"
+  },
+  {
+    "type": "info",
+    "title": "Synced: Xiaomi Home",
+    "message": "Synced 3 devices from Xiaomi Home.",
+    "icon": "\ud83d\udcf1",
+    "timestamp": "12:34:56",
+    "read": false,
+    "created_at": "2026-07-19T12:34:56.709761",
+    "_id": "36"
+  },
+  {
+    "type": "info",
+    "title": "AI Automation Command",
+    "message": "Parsed command: Turn off everything except the refrigerator.",
+    "icon": "\ud83e\udde0",
+    "timestamp": "12:35:05",
+    "read": false,
+    "created_at": "2026-07-19T12:35:05.435869",
+    "_id": "37"
   }
 ]

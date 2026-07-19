@@ -1,6 +1,6 @@
 {
   "_id": "main",
-  "livingLight": false,
+  "livingLight": true,
   "livingFan": false,
   "livingTV": false,
   "livingCurtain": true,
@@ -21,5 +21,14 @@
   "frontDoor": true,
   "gateLight": false,
   "alarm": true,
-  "doorbell": true
+  "doorbell": true,
+  "tplink_kasa_kitchen_plug": false,
+  "tplink_kasa_exhaust_switch": false,
+  "tplink_kasa_water_heater_plug": false,
+  "philips_hue_living_room_bulb": false,
+  "philips_hue_ceiling_light": false,
+  "philips_hue_table_lamp": false,
+  "xiaomi_home_mi_purifier": false,
+  "xiaomi_home_ac_unit": false,
+  "xiaomi_home_smart_fan": false
 }

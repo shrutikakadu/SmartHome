@@ -104,3 +104,22 @@ export const trainingAPI = {
   start: () => request('POST', '/training/start'),
   stop: () => request('POST', '/training/stop'),
 }
+
+// ── Ecosystem / Universal Hub ──
+export const ecosystemAPI = {
+  getBrands: () => request('GET', '/ecosystem/brands'),
+  syncBrand: (brandId) => request('POST', `/ecosystem/brands/sync/${brandId}`),
+  getHubConfig: () => request('GET', '/ecosystem/hub/config'),
+  updateHubConfig: (config) => request('PUT', '/ecosystem/hub/config', config),
+  parseAutomation: (message) => request('POST', '/ecosystem/automation/parse', { message }),
+}
+
+// ── Settings & Real MQTT Configuration ──
+export const settingsAPI = {
+  get: () => request('GET', '/settings'),
+  update: (data) => request('PUT', '/settings', data),
+  getMqttStatus: () => request('GET', '/settings/mqtt/status'),
+  updateMqtt: (data) => request('PUT', '/settings/mqtt', data),
+}
+
+

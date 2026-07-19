@@ -3,5 +3,91 @@
   "notifications": true,
   "dark_mode": true,
   "sound_effects": false,
-  "mqtt_auto_connect": true
+  "mqtt_auto_connect": true,
+  "ecosystem_brands": {
+    "philips_hue": {
+      "id": "philips_hue",
+      "name": "Philips Hue",
+      "icon": "\ud83d\udca1",
+      "connected": true,
+      "devices": [
+        "Living Room Bulb",
+        "Ceiling Light",
+        "Table Lamp"
+      ]
+    },
+    "xiaomi_home": {
+      "id": "xiaomi_home",
+      "name": "Xiaomi Home",
+      "icon": "\ud83d\udcf1",
+      "connected": true,
+      "devices": [
+        "Mi Purifier",
+        "Xiaomi AC Unit",
+        "Smart Fan"
+      ]
+    },
+    "tplink_kasa": {
+      "id": "tplink_kasa",
+      "name": "TP-Link Kasa",
+      "icon": "\ud83d\udd0c",
+      "connected": true,
+      "devices": [
+        "Kitchen Plug",
+        "Exhaust Switch",
+        "Water Heater Plug"
+      ]
+    },
+    "google_home": {
+      "id": "google_home",
+      "name": "Google Home",
+      "icon": "\ud83c\udfe0",
+      "connected": false,
+      "devices": [
+        "Nest Hub",
+        "Nest Cam",
+        "Google Speaker"
+      ]
+    },
+    "apple_home": {
+      "id": "apple_home",
+      "name": "Apple Home",
+      "icon": "\ud83c\udf4e",
+      "connected": false,
+      "devices": [
+        "Apple TV",
+        "HomePod Mini",
+        "Door Sensor"
+      ]
+    },
+    "amazon_alexa": {
+      "id": "amazon_alexa",
+      "name": "Amazon Alexa",
+      "icon": "\ud83d\udde3\ufe0f",
+      "connected": false,
+      "devices": [
+        "Echo Show",
+        "Alexa Plug 1",
+        "Ring Doorbell"
+      ]
+    }
+  },
+  "hub_config": {
+    "option": 3,
+    "webhook_url": "https://api.smarthome.ai/v1/webhook",
+    "config_yaml": "hub:\n  name: Universal AI Home Hub\n  version: 1.0.0\n  local_ip: 192.168.1.150\n  protocols:\n    matter: true\n    zigbee: true\n    ble: true\n    wifi: true\n\nautomations:\n  local_ai:\n    privacy_mode: local-first\n    model: edge-phi-3-mini\n    confidence_threshold: 0.85\n\ndevices:\n  discovery: active\n  scan_interval: 60",
+    "esp32_pins": {
+      "relay1": 25,
+      "relay2": 13,
+      "relay3": 14,
+      "relay4": 15,
+      "status_led": 2,
+      "buzzer": 4
+    }
+  },
+  "mqtt_host": "broker.hivemq.com",
+  "mqtt_port": 1883,
+  "mqtt_user": null,
+  "mqtt_pass": null,
+  "mqtt_prefix": "smart-home"
 }

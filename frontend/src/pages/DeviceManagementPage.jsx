@@ -20,13 +20,49 @@ const DEVICE_META = {
 function getDeviceMeta(key) {
   const lower = key.toLowerCase()
   if (DEVICE_META[lower]) return DEVICE_META[lower]
-  if (lower.includes('light'))   return { name: 'Smart Light',     room: 'Living Room', cat: 'light'  }
-  if (lower.includes('fan'))     return { name: 'Ceiling Fan',     room: 'Bedroom',     cat: 'fan'    }
-  if (lower.includes('tv'))      return { name: 'Smart TV',        room: 'Living Room', cat: 'tv'     }
-  if (lower.includes('ac') || lower.includes('air')) return { name: 'Air Conditioner', room: 'Bedroom', cat: 'ac' }
-  if (lower.includes('lock'))    return { name: 'Smart Lock',      room: 'Main Door',   cat: 'lock'   }
-  if (lower.includes('curtain')) return { name: 'Curtains',        room: 'Living Room', cat: 'curtain'}
-  return { name: key, room: 'Unknown', cat: 'light' }
+  
+  let brandSuffix = ''
+  let cleanKey = lower
+  let room = 'Living Room'
+  
+  if (lower.startsWith('philips_hue_')) {
+    brandSuffix = ' (Hue)'
+    cleanKey = lower.replace('philips_hue_', '')
+    room = 'Living Room'
+  } else if (lower.startsWith('xiaomi_home_')) {
+    brandSuffix = ' (Xiaomi)'
+    cleanKey = lower.replace('xiaomi_home_', '')
+    room = 'Master Bedroom'
+  } else if (lower.startsWith('tplink_kasa_')) {
+    brandSuffix = ' (Kasa)'
+    cleanKey = lower.replace('tplink_kasa_', '')
+    room = 'Kitchen'
+  } else if (lower.startsWith('google_home_')) {
+    brandSuffix = ' (Google)'
+    cleanKey = lower.replace('google_home_', '')
+    room = 'Study Room'
+  } else if (lower.startsWith('apple_home_')) {
+    brandSuffix = ' (Apple)'
+    cleanKey = lower.replace('apple_home_', '')
+    room = 'Main Door'
+  } else if (lower.startsWith('amazon_alexa_')) {
+    brandSuffix = ' (Alexa)'
+    cleanKey = lower.replace('amazon_alexa_', '')
+    room = 'Outdoor'
+  }
+  
+  const name = cleanKey.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + brandSuffix
+  
+  let cat = 'light'
+  if (cleanKey.includes('light') || cleanKey.includes('bulb')) cat = 'light'
+  else if (cleanKey.includes('fan') || cleanKey.includes('exhaust')) cat = 'fan'
+  else if (cleanKey.includes('tv') || cleanKey.includes('speaker') || cleanKey.includes('hub') || cleanKey.includes('monitor')) cat = 'tv'
+  else if (cleanKey.includes('ac') || cleanKey.includes('purifier') || cleanKey.includes('climate')) cat = 'ac'
+  else if (cleanKey.includes('lock')) cat = 'lock'
+  else if (cleanKey.includes('curtain')) cat = 'curtain'
+  else if (cleanKey.includes('plug') || cleanKey.includes('switch')) cat = 'light'
+  
+  return { name, room, cat }
 }
 
 export default function DeviceManagementPage() {

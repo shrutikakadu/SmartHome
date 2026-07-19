@@ -68,5 +68,194 @@
     "level": "info",
     "created_at": "2026-07-16T19:11:14.355194",
     "_id": "10"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.247968",
+    "_id": "11"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.260921",
+    "_id": "12"
+  },
+  {
+    "message": "Device livingLight turned off",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.657061",
+    "_id": "13"
+  },
+  {
+    "message": "Device livingLight turned off",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.668371",
+    "_id": "14"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.884115",
+    "_id": "15"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:13.897201",
+    "_id": "16"
+  },
+  {
+    "message": "Device livingLight turned off",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:14.454782",
+    "_id": "17"
+  },
+  {
+    "message": "Device livingLight turned off",
+    "time": "11:43",
+    "level": "info",
+    "created_at": "2026-07-19T11:43:14.477572",
+    "_id": "18"
+  },
+  {
+    "message": "Universal AI Hub synced TP-Link Kasa ecosystem: [Kitchen Plug, Exhaust Switch, Water Heater Plug]",
+    "time": "11:46",
+    "level": "info",
+    "created_at": "2026-07-19T11:46:20.361368",
+    "_id": "19"
+  },
+  {
+    "message": "Universal AI Hub configuration updated to Option 3",
+    "time": "11:47",
+    "level": "info",
+    "created_at": "2026-07-19T11:47:42.600743",
+    "_id": "20"
+  },
+  {
+    "message": "AI Automation Parser: Executed fanned commands across brand networks for 'Turn off everything except the refrigerator.'",
+    "time": "11:48",
+    "level": "info",
+    "created_at": "2026-07-19T11:48:52.167063",
+    "_id": "21"
+  },
+  {
+    "message": "Universal AI Hub synced TP-Link Kasa ecosystem: [Kitchen Plug, Exhaust Switch, Water Heater Plug]",
+    "time": "11:52",
+    "level": "info",
+    "created_at": "2026-07-19T11:52:43.047593",
+    "_id": "22"
+  },
+  {
+    "message": "Universal AI Hub synced TP-Link Kasa ecosystem: [Kitchen Plug, Exhaust Switch, Water Heater Plug]",
+    "time": "11:56",
+    "level": "info",
+    "created_at": "2026-07-19T11:56:20.031140",
+    "_id": "23"
+  },
+  {
+    "message": "Universal AI Hub synced Philips Hue ecosystem: [Living Room Bulb, Ceiling Light, Table Lamp]",
+    "time": "12:00",
+    "level": "info",
+    "created_at": "2026-07-19T12:00:07.399409",
+    "_id": "24"
+  },
+  {
+    "message": "Universal AI Hub synced Philips Hue ecosystem: [Living Room Bulb, Ceiling Light, Table Lamp]",
+    "time": "12:00",
+    "level": "info",
+    "created_at": "2026-07-19T12:00:09.548337",
+    "_id": "25"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.com:18831883",
+    "time": "12:13",
+    "level": "info",
+    "created_at": "2026-07-19T12:13:56.549903",
+    "_id": "26"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.combroker.hivemq.com:18831883",
+    "time": "12:14",
+    "level": "info",
+    "created_at": "2026-07-19T12:14:55.597389",
+    "_id": "27"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.combroker.hivemq.com:188318831883",
+    "time": "12:16",
+    "level": "info",
+    "created_at": "2026-07-19T12:16:39.860702",
+    "_id": "28"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.combroker.hivemq.com127.0.0.1:188318831883",
+    "time": "12:17",
+    "level": "info",
+    "created_at": "2026-07-19T12:17:06.827656",
+    "_id": "29"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.combroker.hivemq.com127.0.0.1:188318831883",
+    "time": "12:20",
+    "level": "info",
+    "created_at": "2026-07-19T12:20:02.802594",
+    "_id": "30"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.combroker.hivemq.com127.0.0.1:18831883",
+    "time": "12:20",
+    "level": "info",
+    "created_at": "2026-07-19T12:20:40.574605",
+    "_id": "31"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "12:21",
+    "level": "info",
+    "created_at": "2026-07-19T12:21:18.102452",
+    "_id": "32"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "12:21",
+    "level": "info",
+    "created_at": "2026-07-19T12:21:18.131375",
+    "_id": "33"
+  },
+  {
+    "message": "MQTT Broker settings updated: broker.hivemq.com:1883",
+    "time": "12:23",
+    "level": "info",
+    "created_at": "2026-07-19T12:23:29.815520",
+    "_id": "34"
+  },
+  {
+    "message": "Device livingLight turned on",
+    "time": "12:28",
+    "level": "info",
+    "created_at": "2026-07-19T12:28:10.235452",
+    "_id": "35"
+  },
+  {
+    "message": "Universal AI Hub synced Xiaomi Home ecosystem: [Mi Purifier, Xiaomi AC Unit, Smart Fan]",
+    "time": "12:34",
+    "level": "info",
+    "created_at": "2026-07-19T12:34:56.711549",
+    "_id": "36"
+  },
+  {
+    "message": "AI Automation Parser: Executed fanned commands across brand networks for 'Turn off everything except the refrigerator.'",
+    "time": "12:35",
+    "level": "info",
+    "created_at": "2026-07-19T12:35:05.438139",
+    "_id": "37"
   }
 ]

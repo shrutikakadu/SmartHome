@@ -9,17 +9,102 @@ from contextlib import asynccontextmanager
 import hashlib, secrets, random, time
 from datetime import datetime, timedelta
 from typing import Optional
+import threading
+import paho.mqtt.client as mqtt
 
 import database as db
 
 START_TIME = time.time()
+
+# ── MQTT Client Manager ────────────────────────────────────────────────────────
+class MQTTManager:
+    def __init__(self):
+        self.client = None
+        self.connected = False
+        self.host = "broker.hivemq.com"
+        self.port = 1883
+        self.user = None
+        self.password = None
+        self.prefix = "smart-home"
+
+    def connect(self):
+        threading.Thread(target=self._connect_thread, daemon=True).start()
+
+    def _connect_thread(self):
+        try:
+            if self.client:
+                try:
+                    self.client.disconnect()
+                    self.client.loop_stop()
+                except:
+                    pass
+            
+            # Setup client
+            self.client = mqtt.Client(client_id="smart_home_backend_" + str(random.randint(1000, 9999)))
+            if self.user and self.password:
+                self.client.username_pw_set(self.user, self.password)
+            
+            self.client.on_connect = self._on_connect
+            self.client.on_disconnect = self._on_disconnect
+            
+            print(f"[MQTT] Connecting to {self.host}:{self.port}...")
+            self.client.connect(self.host, self.port, 60)
+            self.client.loop_start()
+        except Exception as e:
+            print(f"[MQTT] Connection failed: {e}")
+            self.connected = False
+
+    def _on_connect(self, client, userdata, flags, rc):
+        if rc == 0:
+            print("[MQTT] Connected successfully.")
+            self.connected = True
+        else:
+            print(f"[MQTT] Connection failed with code {rc}")
+            self.connected = False
+
+    def _on_disconnect(self, client, userdata, rc):
+        print(f"[MQTT] Disconnected from broker. Code {rc}")
+        self.connected = False
+
+    def publish(self, device_id: str, state: bool):
+        if not self.connected or not self.client:
+            print(f"[MQTT] Not connected. Mock publish on '{self.prefix}/{device_id}' -> {'1' if state else '0'}")
+            return False
+        
+        topic = f"{self.prefix}/{device_id}"
+        payload = "1" if state else "0"
+        try:
+            info = self.client.publish(topic, payload, qos=1)
+            # Do not block thread infinitely, but wait briefly for publish confirmation
+            info.wait_for_publish(timeout=2.0)
+            print(f"[MQTT] Published to {topic} -> {payload}")
+            return True
+        except Exception as e:
+            print(f"[MQTT] Publish failed: {e}")
+            return False
+
+mqtt_mgr = MQTTManager()
+
+async def init_mqtt():
+    doc = await db.settings_col.find_one({"_id": "main"})
+    settings = doc or {}
+    mqtt_mgr.host = settings.get("mqtt_host", "broker.hivemq.com")
+    mqtt_mgr.port = int(settings.get("mqtt_port", 1883))
+    mqtt_mgr.user = settings.get("mqtt_user", None)
+    mqtt_mgr.password = settings.get("mqtt_pass", None)
+    mqtt_mgr.prefix = settings.get("mqtt_prefix", "smart-home")
+    mqtt_mgr.connect()
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect_db()
     await db.seed_data()
+    await init_mqtt()
     yield
+    if mqtt_mgr.client:
+        mqtt_mgr.client.disconnect()
+        mqtt_mgr.client.loop_stop()
     await db.close_db()
 
 app = FastAPI(
@@ -116,6 +201,15 @@ class SettingsUpdate(BaseModel):
     sound_effects: Optional[bool] = None
     mqtt_auto_connect: Optional[bool] = None
 
+class HubConfigUpdate(BaseModel):
+    option: int
+    webhook_url: Optional[str] = None
+    config_yaml: Optional[str] = None
+    esp32_pins: Optional[dict] = None
+
+class AutomationQueryReq(BaseModel):
+    message: str
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HEALTH
@@ -209,6 +303,7 @@ async def get_devices():
 @app.post("/device/toggle")
 async def toggle_device(req: DeviceToggle):
     await db.devices_col.update_one({"_id": "main"}, {"$set": {req.device_id: req.state}})
+    mqtt_mgr.publish(req.device_id, req.state)
     await add_notification("info", f"Device {'ON' if req.state else 'OFF'}", f"{req.device_id} turned {'on' if req.state else 'off'}", "💡")
     await add_log(f"Device {req.device_id} turned {'on' if req.state else 'off'}")
     return {"success": True, "device_id": req.device_id, "state": req.state}
@@ -216,6 +311,8 @@ async def toggle_device(req: DeviceToggle):
 @app.put("/devices/state")
 async def bulk_update(req: BulkDeviceState):
     await db.devices_col.update_one({"_id": "main"}, {"$set": req.devices})
+    for dev_id, state in req.devices.items():
+        mqtt_mgr.publish(dev_id, state)
     return {"success": True, "updated": len(req.devices)}
 
 @app.get("/device/{device_id}")
@@ -240,6 +337,16 @@ async def handle_gesture(cmd: GestureCommand):
         "created_at": datetime.now(),
     }
     await db.gesture_history_col.insert_one(entry)
+    
+    if cmd.device_id:
+        state = "on" in cmd.action.lower() or "open" in cmd.action.lower() or cmd.action.lower() == "toggle"
+        if cmd.action.lower() == "toggle":
+            doc = await db.devices_col.find_one({"_id": "main"})
+            current = (doc or {}).get(cmd.device_id, False)
+            state = not current
+        await db.devices_col.update_one({"_id": "main"}, {"$set": {cmd.device_id: state}})
+        mqtt_mgr.publish(cmd.device_id, state)
+        
     await add_notification("gesture", f"Gesture: {cmd.gesture}", cmd.action, "🤚")
     await add_log(f"Gesture: {cmd.gesture} → {cmd.action}")
     return {"success": True, "gesture": cmd.gesture, "action": cmd.action, "confidence": conf}
@@ -470,6 +577,51 @@ async def update_settings(req: SettingsUpdate):
     await db.settings_col.update_one({"_id": "main"}, {"$set": update}, upsert=True)
     return {"success": True}
 
+class MqttSettingsUpdate(BaseModel):
+    host: str
+    port: int
+    user: Optional[str] = None
+    password: Optional[str] = None
+    prefix: Optional[str] = "smart-home"
+
+@app.put("/settings/mqtt")
+async def update_mqtt_settings(req: MqttSettingsUpdate):
+    await db.settings_col.update_one(
+        {"_id": "main"}, 
+        {"$set": {
+            "mqtt_host": req.host,
+            "mqtt_port": req.port,
+            "mqtt_user": req.user,
+            "mqtt_pass": req.password,
+            "mqtt_prefix": req.prefix
+        }}, 
+        upsert=True
+    )
+    
+    # Update manager credentials
+    mqtt_mgr.host = req.host
+    mqtt_mgr.port = req.port
+    mqtt_mgr.user = req.user
+    mqtt_mgr.password = req.password
+    mqtt_mgr.prefix = req.prefix or "smart-home"
+    
+    # Trigger reconnection thread
+    mqtt_mgr.connect()
+    
+    await add_notification("info", "MQTT Broker Connection", f"Reconnecting to {req.host}:{req.port}...", "📡")
+    await add_log(f"MQTT Broker settings updated: {req.host}:{req.port}")
+    return {"success": True, "connected": mqtt_mgr.connected}
+
+@app.get("/settings/mqtt/status")
+async def get_mqtt_status():
+    return {
+        "connected": mqtt_mgr.connected,
+        "host": mqtt_mgr.host,
+        "port": mqtt_mgr.port,
+        "prefix": mqtt_mgr.prefix
+    }
+
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # AI TRAINING
@@ -493,3 +645,143 @@ async def start_training():
 async def stop_training():
     await add_log("AI model training stopped")
     return {"success": True, "message": "Training stopped"}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ECOSYSTEM / UNIVERSAL HUB ROUTING
+# ══════════════════════════════════════════════════════════════════════════════
+
+DEFAULT_BRANDS = {
+    "philips_hue": {"id": "philips_hue", "name": "Philips Hue", "icon": "💡", "connected": False, "devices": ["Living Room Bulb", "Ceiling Light", "Table Lamp"]},
+    "xiaomi_home": {"id": "xiaomi_home", "name": "Xiaomi Home", "icon": "📱", "connected": False, "devices": ["Mi Purifier", "Xiaomi AC Unit", "Smart Fan"]},
+    "tplink_kasa": {"id": "tplink_kasa", "name": "TP-Link Kasa", "icon": "🔌", "connected": False, "devices": ["Kitchen Plug", "Exhaust Switch", "Water Heater Plug"]},
+    "google_home": {"id": "google_home", "name": "Google Home", "icon": "🏠", "connected": False, "devices": ["Nest Hub", "Nest Cam", "Google Speaker"]},
+    "apple_home": {"id": "apple_home", "name": "Apple Home", "icon": "🍎", "connected": False, "devices": ["Apple TV", "HomePod Mini", "Door Sensor"]},
+    "amazon_alexa": {"id": "amazon_alexa", "name": "Amazon Alexa", "icon": "🗣️", "connected": False, "devices": ["Echo Show", "Alexa Plug 1", "Ring Doorbell"]},
+}
+
+DEFAULT_HUB_CONFIG = {
+    "option": 2, 
+    "webhook_url": "https://api.smarthome.ai/v1/webhook",
+    "config_yaml": "hub:\n  name: Universal AI Home Hub\n  version: 1.0.0\n  local_ip: 192.168.1.150\n  protocols:\n    matter: true\n    zigbee: true\n    ble: true\n    wifi: true\n\nautomations:\n  local_ai:\n    privacy_mode: local-first\n    model: edge-phi-3-mini\n    confidence_threshold: 0.85\n\ndevices:\n  discovery: active\n  scan_interval: 60",
+    "esp32_pins": {
+        "relay1": 12,
+        "relay2": 13,
+        "relay3": 14,
+        "relay4": 15,
+        "status_led": 2,
+        "buzzer": 4
+    }
+}
+
+@app.get("/ecosystem/brands")
+async def get_ecosystem_brands():
+    doc = await db.settings_col.find_one({"_id": "main"})
+    brands = (doc or {}).get("ecosystem_brands", DEFAULT_BRANDS)
+    return {"brands": brands}
+
+@app.post("/ecosystem/brands/sync/{brand_id}")
+async def sync_ecosystem_brand(brand_id: str):
+    doc = await db.settings_col.find_one({"_id": "main"})
+    settings = doc or {}
+    brands = settings.get("ecosystem_brands", DEFAULT_BRANDS.copy())
+    
+    if brand_id not in brands:
+        raise HTTPException(status_code=404, detail="Brand not found")
+        
+    brands[brand_id]["connected"] = True
+    await db.settings_col.update_one({"_id": "main"}, {"$set": {"ecosystem_brands": brands}}, upsert=True)
+    
+    # Register synced devices in main devices list so they show up on Devices page
+    device_updates = {}
+    brand_devices_map = {
+        "philips_hue": ["philips_hue_living_room_bulb", "philips_hue_ceiling_light", "philips_hue_table_lamp"],
+        "xiaomi_home": ["xiaomi_home_mi_purifier", "xiaomi_home_ac_unit", "xiaomi_home_smart_fan"],
+        "tplink_kasa": ["tplink_kasa_kitchen_plug", "tplink_kasa_exhaust_switch", "tplink_kasa_water_heater_plug"],
+        "google_home": ["google_home_nest_hub", "google_home_nest_cam", "google_home_google_speaker"],
+        "apple_home": ["apple_home_apple_tv", "apple_home_homepod_mini", "apple_home_door_sensor"],
+        "amazon_alexa": ["amazon_alexa_echo_show", "amazon_alexa_alexa_plug", "amazon_alexa_ring_doorbell"],
+    }
+    
+    if brand_id in brand_devices_map:
+        for dev_key in brand_devices_map[brand_id]:
+            device_updates[dev_key] = False # Default state is OFF
+            
+    if device_updates:
+        await db.devices_col.update_one({"_id": "main"}, {"$set": device_updates}, upsert=True)
+        
+    brand_name = brands[brand_id]["name"]
+    devices_synced = ", ".join(brands[brand_id]["devices"])
+    await add_notification("info", f"Synced: {brand_name}", f"Synced {len(brands[brand_id]['devices'])} devices from {brand_name}.", brands[brand_id]["icon"])
+    await add_log(f"Universal AI Hub synced {brand_name} ecosystem: [{devices_synced}]")
+    
+    return {"success": True, "brand": brands[brand_id]}
+
+@app.get("/ecosystem/hub/config")
+async def get_hub_config():
+    doc = await db.settings_col.find_one({"_id": "main"})
+    config = (doc or {}).get("hub_config", DEFAULT_HUB_CONFIG)
+    return {"config": config}
+
+@app.put("/ecosystem/hub/config")
+async def update_hub_config(req: HubConfigUpdate):
+    update = {k: v for k, v in req.model_dump().items() if v is not None}
+    
+    doc = await db.settings_col.find_one({"_id": "main"})
+    settings = doc or {}
+    current_config = settings.get("hub_config", DEFAULT_HUB_CONFIG.copy())
+    current_config.update(update)
+    
+    await db.settings_col.update_one({"_id": "main"}, {"$set": {"hub_config": current_config}}, upsert=True)
+    await add_notification("info", "Hub Configuration Updated", f"Saved configuration for Option {req.option}", "⚙️")
+    await add_log(f"Universal AI Hub configuration updated to Option {req.option}")
+    return {"success": True, "config": current_config}
+
+@app.post("/ecosystem/automation/parse")
+async def parse_ecosystem_automation(req: AutomationQueryReq):
+    msg = req.message.lower().strip()
+    
+    commands = []
+    rule_suggestion = None
+    
+    if "refrigerator" in msg or "fridge" in msg:
+        commands = [
+            {"brand": "TP-Link Kasa", "protocol": "Zigbee", "device": "Refrigerator Smart Plug", "action": "MAINTAIN ON", "status": "active"},
+            {"brand": "Philips Hue", "protocol": "Matter over Wi-Fi", "device": "Living Room Bulb", "action": "TURN OFF", "status": "success"},
+            {"brand": "Philips Hue", "protocol": "Matter over Wi-Fi", "device": "Table Lamp", "action": "TURN OFF", "status": "success"},
+            {"brand": "Xiaomi Home", "protocol": "Bluetooth LE", "device": "Xiaomi AC Unit", "action": "POWER OFF", "status": "success"},
+            {"brand": "Apple Home", "protocol": "Thread", "device": "Apple TV", "action": "SLEEP", "status": "success"},
+        ]
+        rule_suggestion = "When turning off all devices, always maintain power to the Refrigerator Smart Plug."
+    elif "cozy" in msg or "candle" in msg:
+        commands = [
+            {"brand": "Philips Hue", "protocol": "Matter over Wi-Fi", "device": "Ceiling Light", "action": "DIM TO 10% (WARM)", "status": "success"},
+            {"brand": "Xiaomi Home", "protocol": "Bluetooth LE", "device": "Smart Fan", "action": "SPEED 1", "status": "success"},
+            {"brand": "Google Home", "protocol": "Matter over Wi-Fi", "device": "Nest Hub", "action": "PLAY CHILL JAZZ PLAYLIST", "status": "success"},
+        ]
+        rule_suggestion = "Activate 'Cozy Lighting' when speech or ASL 'Cozy' is detected after 7:00 PM."
+    elif "sleep" in msg or "bed" in msg or "night" in msg:
+        commands = [
+            {"brand": "Apple Home", "protocol": "Thread", "device": "Door Lock", "action": "LOCK MAIN DOOR", "status": "success"},
+            {"brand": "Xiaomi Home", "protocol": "Bluetooth LE", "device": "Xiaomi AC Unit", "action": "SET TEMPERATURE 23°C", "status": "success"},
+            {"brand": "Philips Hue", "protocol": "Matter over Wi-Fi", "device": "Table Lamp", "action": "TURN OFF", "status": "success"},
+        ]
+        rule_suggestion = "Activate sleep profile and lock doors when the bed light is turned off after 10:00 PM."
+    else:
+        commands = [
+            {"brand": "Philips Hue", "protocol": "Matter over Wi-Fi", "device": "Ceiling Light", "action": "TOGGLE", "status": "success"},
+            {"brand": "TP-Link Kasa", "protocol": "Zigbee", "device": "Kitchen Plug", "action": "TOGGLE", "status": "success"},
+        ]
+        rule_suggestion = f"Map custom phrase '{req.message}' to your evening routine automations."
+
+    await add_notification("info", "AI Automation Command", f"Parsed command: {req.message}", "🧠")
+    await add_log(f"AI Automation Parser: Executed fanned commands across brand networks for '{req.message}'")
+    
+    return {
+        "success": True,
+        "input": req.message,
+        "commands": commands,
+        "rule_suggestion": rule_suggestion,
+        "latency_ms": random.randint(15, 45)
+    }
+

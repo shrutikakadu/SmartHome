@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { recognizeSign } from '../utils/recognizer'
 import Home3D from '../components/Home3D'
+import EcosystemPage from './EcosystemPage'
 import './smarthome.css'
 
 /* ══════════════════════════════════════════════════════════════
@@ -1038,6 +1039,59 @@ export default function SmartHome({ externalSign }) {
   const [editEmail, setEditEmail] = useState(user.email || '')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // MQTT settings state
+  const [mqttHost, setMqttHost] = useState('broker.hivemq.com')
+  const [mqttPort, setMqttPort] = useState(1883)
+  const [mqttUser, setMqttUser] = useState('')
+  const [mqttPass, setMqttPass] = useState('')
+  const [mqttPrefix, setMqttPrefix] = useState('smart-home')
+  const [mqttConnected, setMqttConnected] = useState(false)
+  const [savingMqtt, setSavingMqtt] = useState(false)
+
+  // Fetch MQTT Status
+  const fetchMqttStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/settings/mqtt/status')
+      if (res.ok) {
+        const data = await res.json()
+        setMqttHost(data.host || 'broker.hivemq.com')
+        setMqttPort(data.port || 1883)
+        setMqttPrefix(data.prefix || 'smart-home')
+        setMqttConnected(data.connected || false)
+      }
+    } catch (err) {
+      console.error('Failed to fetch MQTT status:', err)
+    }
+  }, [])
+
+  // Save MQTT Config
+  const saveMqttConfig = async (e) => {
+    if (e) e.preventDefault()
+    setSavingMqtt(true)
+    try {
+      const res = await fetch('/api/settings/mqtt', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          host: mqttHost,
+          port: parseInt(mqttPort) || 1883,
+          user: mqttUser || null,
+          password: mqttPass || null,
+          prefix: mqttPrefix || 'smart-home'
+        })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMqttConnected(data.connected)
+        showToast({ icon: '📡', label: 'MQTT Config Saved', gesture: 'System' })
+      }
+    } catch (err) {
+      console.error('Failed to save MQTT config:', err)
+    } finally {
+      setSavingMqtt(false)
+    }
+  }
+
   // ── Live clock ──
   useEffect(() => {
     const tick = () => {
@@ -1070,9 +1124,11 @@ export default function SmartHome({ externalSign }) {
         // Notifications
         const nRes = await fetch('/api/notifications')
         if (nRes.ok) { const nd = await nRes.json(); setNotifications(nd.notifications || []) }
+        // MQTT status
+        fetchMqttStatus()
       }
     } catch { setApiOnline(false) }
-  }, [])
+  }, [fetchMqttStatus])
 
   useEffect(() => { fetchBackend(); const id = setInterval(fetchBackend, 30000); return () => clearInterval(id) }, [fetchBackend])
 
@@ -1306,11 +1362,16 @@ export default function SmartHome({ externalSign }) {
     { id: 'rooms',       icon: '🏠', label: 'Rooms'         },
     { id: 'devices',     icon: '💡', label: 'Devices'       },
     { id: 'automations', icon: '⚙️', label: 'Automations'  },
+    { id: 'hub',         icon: '🔌', label: 'Hub Lab'      },
     { id: 'scenes',      icon: '🎬', label: 'Scenes'        },
     { id: 'history',     icon: '📋', label: 'History'       },
     { id: 'notifs',      icon: '🔔', label: 'Notifications' },
     { id: 'settings',    icon: '⚙️', label: 'Settings'     },
   ]
+
+  const filteredSideTabs = useMemo(() => {
+    return SIDE_TABS.filter(t => t.id !== 'hub' || user?.role === 'admin')
+  }, [user?.role])
 
   return (
     <div className="sh-root">
@@ -1330,14 +1391,14 @@ export default function SmartHome({ externalSign }) {
           </div>
         </div>
         <div className="sh-sidebar-nav">
-          {SIDE_TABS.slice(0, 6).map(t => (
+          {filteredSideTabs.slice(0, 6).map(t => (
             <button key={t.id} className={`sh-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setSidebarOpen(false); }}>
               <span className="sh-nav-icon">{t.icon}</span>
               <span className="sh-nav-label">{t.label}</span>
             </button>
           ))}
           <div className="sh-sidebar-divider"/>
-          {SIDE_TABS.slice(6).map(t => (
+          {filteredSideTabs.slice(6).map(t => (
             <button key={t.id} className={`sh-nav-btn ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setSidebarOpen(false); }}>
               <span className="sh-nav-icon">{t.icon}</span>
               <span className="sh-nav-label">{t.label}
@@ -2259,6 +2320,11 @@ export default function SmartHome({ externalSign }) {
             </div>
           )}
 
+          {/* ── HUB LAB TAB ── */}
+          {tab === 'hub' && (
+            <EcosystemPage nested={true} />
+          )}
+
           {/* ── SETTINGS TAB ── */}
           {tab === 'settings' && (
             <div className="sh-card">
@@ -2280,9 +2346,44 @@ export default function SmartHome({ externalSign }) {
               {settingsActiveTab === 'devices' && (
                 <div className="sh-settings-body">
                   <div className="sh-settings-row"><span>Auto-discover devices</span><div className="sh-mini-toggle on"><div className="sh-mini-knob"/></div></div>
-                  <div className="sh-settings-row"><span>MQTT Auto-connect</span><div className="sh-mini-toggle on"><div className="sh-mini-knob"/></div></div>
                   <div className="sh-settings-row"><span>Backend URL</span><input className="sh-settings-input" defaultValue="http://localhost:8000"/></div>
                   <div className="sh-settings-row"><span>API Status</span><span style={{ color: apiOnline ? 'var(--green)' : 'var(--red)', fontWeight:700 }}>{apiOnline ? '● Online' : '○ Offline'}</span></div>
+                  
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '14px 0', paddingTop: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--text)' }}>📡 MQTT Broker Integration</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: mqttConnected ? 'var(--green)' : 'var(--muted)' }}>
+                        {mqttConnected ? '● Broker Connected' : '○ Broker Offline'}
+                      </span>
+                    </div>
+                    
+                    <form onSubmit={saveMqttConfig} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div className="sh-settings-row">
+                        <span>Broker Host / IP</span>
+                        <input className="sh-settings-input" value={mqttHost} onChange={e => setMqttHost(e.target.value)} placeholder="e.g. broker.hivemq.com" required />
+                      </div>
+                      <div className="sh-settings-row">
+                        <span>Broker Port</span>
+                        <input className="sh-settings-input" type="number" value={mqttPort} onChange={e => setMqttPort(parseInt(e.target.value) || 1883)} placeholder="1883" required />
+                      </div>
+                      <div className="sh-settings-row">
+                        <span>Broker User (Optional)</span>
+                        <input className="sh-settings-input" value={mqttUser} onChange={e => setMqttUser(e.target.value)} placeholder="Username" />
+                      </div>
+                      <div className="sh-settings-row">
+                        <span>Broker Password (Optional)</span>
+                        <input className="sh-settings-input" type="password" value={mqttPass} onChange={e => setMqttPass(e.target.value)} placeholder="Password" />
+                      </div>
+                      <div className="sh-settings-row">
+                        <span>Topic Prefix</span>
+                        <input className="sh-settings-input" value={mqttPrefix} onChange={e => setMqttPrefix(e.target.value)} placeholder="smart-home" />
+                      </div>
+                      
+                      <button type="submit" className="sh-profile-btn save" style={{ marginTop: 8, width: 'fit-content' }} disabled={savingMqtt}>
+                        {savingMqtt ? 'Saving Connection...' : 'Save & Reconnect MQTT'}
+                      </button>
+                    </form>
+                  </div>
                 </div>
               )}
               {settingsActiveTab === 'notifications' && (
